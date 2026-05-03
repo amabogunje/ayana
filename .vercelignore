@@ -1,0 +1,16 @@
+.env
+.env.local
+.env*.local
+.vercel
+.next
+node_modules
+coverage
+test-results
+playwright-report
+*.log
+*.tsbuildinfo
+/*.png
+prisma/dev.db
+prisma/dev.db-journal
+prisma/test.db
+prisma/test.db-journal
