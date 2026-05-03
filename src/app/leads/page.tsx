@@ -1,4 +1,5 @@
 import { Mail, Sparkles } from "lucide-react";
+import type { PilotLead } from "@prisma/client";
 import { requirePlatformUser } from "@/lib/auth";
 const roleLabels: Record<string, string> = {
   owner: "Owner",
@@ -21,7 +22,7 @@ export default async function LeadsPage() {
   await requirePlatformUser();
 
   const { prisma } = await import("@/lib/prisma");
-  const leads = await prisma.pilotLead.findMany({
+  const leads: PilotLead[] = await prisma.pilotLead.findMany({
     orderBy: { createdAt: "desc" },
   });
 
