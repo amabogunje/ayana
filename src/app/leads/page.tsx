@@ -1,21 +1,10 @@
 import { Mail, Sparkles } from "lucide-react";
 import { requirePlatformUser } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-
 const roleLabels: Record<string, string> = {
   owner: "Owner",
   manager: "Manager",
   promoter: "Promoter",
   staff: "Staff",
-};
-
-type PilotLeadRow = {
-  id: string;
-  fullName: string;
-  email: string;
-  venueName: string;
-  role: string;
-  createdAt: Date | string | number;
 };
 
 function formatDate(date: Date | string | number) {
@@ -31,11 +20,10 @@ function formatDate(date: Date | string | number) {
 export default async function LeadsPage() {
   await requirePlatformUser();
 
-  const leads = await prisma.$queryRaw<PilotLeadRow[]>`
-    SELECT id, fullName, email, venueName, role, createdAt
-    FROM PilotLead
-    ORDER BY createdAt DESC
-  `;
+  const { prisma } = await import("@/lib/prisma");
+  const leads = await prisma.pilotLead.findMany({
+    orderBy: { createdAt: "desc" },
+  });
 
   return (
     <main className="admin-page">
