@@ -1,4 +1,3 @@
-import { randomUUID } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
@@ -13,24 +12,17 @@ const leadSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const body = leadSchema.parse(await request.json());
-    const leadId = randomUUID();
-    const now = new Date();
+    const lead = await prisma.pilotLead.create({
+      data: {
+        fullName: body.fullName,
+        email: body.email.toLowerCase(),
+        venueName: body.venueName,
+        role: body.role,
+        source: "landing_page",
+      },
+    });
 
-    await prisma.$executeRaw`
-      INSERT INTO PilotLead (id, fullName, email, venueName, role, source, createdAt, updatedAt)
-      VALUES (
-        ${leadId},
-        ${body.fullName},
-        ${body.email.toLowerCase()},
-        ${body.venueName},
-        ${body.role},
-        ${"landing_page"},
-        ${now},
-        ${now}
-      )
-    `;
-
-    return NextResponse.json({ leadId }, { status: 201 });
+    return NextResponse.json({ leadId: lead.id }, { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to submit pilot request.";
     return NextResponse.json({ error: message }, { status: 400 });
