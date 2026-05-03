@@ -1,0 +1,32 @@
+<svg width="760" height="180" viewBox="0 0 760 180" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Ayana</title>
+  <desc id="desc">Horizontal Ayana logo with colorful audio bars and wordmark.</desc>
+  <defs>
+    <linearGradient id="g1" x1="22" y1="50" x2="78" y2="130" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFB000"/>
+      <stop offset="1" stop-color="#F35A12"/>
+    </linearGradient>
+    <linearGradient id="g2" x1="90" y1="58" x2="90" y2="142" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFD11A"/>
+      <stop offset="1" stop-color="#F58B00"/>
+    </linearGradient>
+    <linearGradient id="g3" x1="136" y1="30" x2="136" y2="166" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#00E08A"/>
+      <stop offset="1" stop-color="#087B61"/>
+    </linearGradient>
+    <linearGradient id="g4" x1="184" y1="4" x2="184" y2="176" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#15C6C8"/>
+      <stop offset="1" stop-color="#015B57"/>
+    </linearGradient>
+    <linearGradient id="g5" x1="238" y1="44" x2="238" y2="154" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E4007F"/>
+      <stop offset="1" stop-color="#52206F"/>
+    </linearGradient>
+  </defs>
+  <path d="M44 56C24 67 14 82 14 102C14 122 26 138 43 153C48 158 56 154 56 147V63C56 56 50 53 44 56Z" fill="url(#g1)"/>
+  <rect x="72" y="60" width="34" height="84" rx="17" fill="url(#g2)"/>
+  <rect x="120" y="32" width="36" height="136" rx="18" fill="url(#g3)"/>
+  <rect x="168" y="4" width="38" height="172" rx="19" fill="url(#g4)"/>
+  <rect x="222" y="48" width="36" height="104" rx="18" fill="url(#g5)"/>
+  <text x="300" y="124" fill="#07111C" font-family="Arial Rounded MT Bold, Arial, Helvetica, sans-serif" font-size="104" font-weight="900" letter-spacing="-7">ayana</text>
+</svg>

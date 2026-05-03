@@ -1,0 +1,386 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum Channel {
+  WEBSITE_CHAT
+  SMS
+  INSTAGRAM_DM
+  PHONE
+  MANUAL
+}
+
+enum InquiryStatus {
+  NEW
+  QUALIFYING
+  QUOTED
+  DEPOSIT_SENT
+  CONFIRMED
+  NEEDS_HUMAN
+  LOST
+}
+
+enum ReservationStatus {
+  PENDING
+  DEPOSIT_PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+enum VenueStatus {
+  DRAFT
+  PILOT
+  ACTIVE
+  PAUSED
+  DEACTIVATED
+}
+
+enum PlatformRole {
+  PLATFORM_OWNER
+  PLATFORM_ADMIN
+}
+
+enum VenueRole {
+  VENUE_OWNER
+  VENUE_MANAGER
+  VENUE_AGENT
+}
+
+enum AlertSeverity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+enum AlertStatus {
+  OPEN
+  RESOLVED
+}
+
+enum VenueAssetType {
+  BOTTLE_MENU
+  FOOD_MENU
+  HOOKAH_MENU
+  EVENT_FLYER
+}
+
+model Venue {
+  id                 String           @id @default(cuid())
+  slug               String           @unique
+  name               String
+  addressLine1       String?
+  city               String
+  state              String?
+  postalCode         String?
+  phoneNumber        String?
+  timezone           String
+  status             VenueStatus      @default(DRAFT)
+  aiEnabled          Boolean          @default(true)
+  channelsSummary    String           @default("SMS")
+  hoursSummary       String?
+  primaryOperatorName  String?
+  primaryOperatorRole  String?
+  primaryOperatorEmail String?
+  brandTone          String
+  responseSlaSeconds Int              @default(30)
+  depositPolicy      String
+  servesFood         Boolean          @default(false)
+  servesHookah       Boolean          @default(false)
+  hasParking         Boolean          @default(false)
+  hasValet           Boolean          @default(false)
+  dressCodeSummary   String?
+  agePolicySummary   String?
+  websiteChatEnabled Boolean          @default(false)
+  websiteChatWidgetKey String?        @unique
+  websiteChatAllowedOrigins String?
+  websiteChatWelcomeMessage String?
+  websiteChatPromptPlaceholder String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  tableOptions       TableOption[]
+  inquiries          Inquiry[]
+  alerts             Alert[]
+  activityLogs       ActivityLog[]
+  venueUsers         VenueUser[]
+  websiteChatSessions WebsiteChatSession[]
+  assets             VenueAsset[]
+  eventSeries        EventSeries[]
+  eventOverrides     EventOccurrenceOverride[]
+}
+
+model PlatformUser {
+  id           String         @id @default(cuid())
+  email        String         @unique
+  fullName     String
+  role         PlatformRole
+  passwordHash String
+  isActive     Boolean        @default(true)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  sessions     PlatformSession[]
+  activityLogs ActivityLog[]
+}
+
+model PlatformConfig {
+  id            String   @id
+  openAIApiKey  String?
+  stripeSecretKey String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model PlatformSession {
+  id         String       @id @default(cuid())
+  token      String       @unique
+  userId     String
+  expiresAt  DateTime
+  createdAt  DateTime     @default(now())
+  user       PlatformUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PilotLead {
+  id        String   @id @default(cuid())
+  fullName  String
+  email     String
+  venueName String
+  role      String
+  source    String   @default("landing_page")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([createdAt])
+  @@index([email])
+}
+
+model TableOption {
+  id                  String   @id @default(cuid())
+  venueId             String
+  name                String
+  code                String
+  quantity            Int      @default(1)
+  minSpendCents       Int
+  depositAmountCents  Int
+  capacityMin         Int
+  capacityMax         Int
+  description         String   @default("")
+  active              Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  venue               Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  quoteOptions        QuoteOption[]
+  reservations        Reservation[]
+
+  @@unique([venueId, code])
+}
+
+model Inquiry {
+  id                  String            @id @default(cuid())
+  venueId             String
+  assignedVenueUserId String?
+  guestName           String
+  phone               String?
+  instagramHandle     String?
+  channel             Channel
+  status              InquiryStatus     @default(NEW)
+  requestedAt         DateTime
+  lastInboundAt       DateTime?
+  lastOutboundAt      DateTime?
+  requestedDateLabel  String
+  partySize           Int
+  spendIntentLabel    String
+  spendIntentMinCents Int?
+  spendIntentMaxCents Int?
+  occasion            String?
+  aiConfidence        Float             @default(0.0)
+  nextAction          String
+  isHumanTakeover     Boolean           @default(false)
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  venue               Venue             @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  assignedVenueUser   VenueUser?        @relation("AssignedInquiryVenueUser", fields: [assignedVenueUserId], references: [id], onDelete: SetNull)
+  messages            InquiryMessage[]
+  quoteOptions        QuoteOption[]
+  reservation         Reservation?
+  alerts              Alert[]
+  websiteChatSession  WebsiteChatSession?
+}
+
+model InquiryMessage {
+  id         String   @id @default(cuid())
+  inquiryId  String
+  authorRole String
+  content    String
+  createdAt  DateTime @default(now())
+  inquiry    Inquiry  @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+}
+
+model WebsiteChatSession {
+  id               String   @id @default(cuid())
+  venueId          String
+  inquiryId        String   @unique
+  sessionToken     String   @unique
+  guestDisplayName String?
+  guestPhone       String?
+  guestEmail       String?
+  origin           String?
+  lastSeenAt       DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  venue            Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  inquiry          Inquiry  @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+
+  @@index([venueId, updatedAt])
+}
+
+model QuoteOption {
+  id            String      @id @default(cuid())
+  inquiryId     String
+  tableOptionId String
+  label         String
+  pitch         String
+  sentAt        DateTime?
+  inquiry       Inquiry     @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+  tableOption   TableOption @relation(fields: [tableOptionId], references: [id], onDelete: Cascade)
+}
+
+model Reservation {
+  id                  String            @id @default(cuid())
+  inquiryId           String            @unique
+  tableOptionId       String
+  status              ReservationStatus @default(PENDING)
+  depositAmountCents  Int
+  depositPaidCents    Int               @default(0)
+  depositCheckoutUrl   String?
+  depositCheckoutSessionId String?
+  confirmationCode    String            @unique
+  arrivalTimeLabel    String
+  notes               String?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  inquiry             Inquiry           @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+  tableOption         TableOption       @relation(fields: [tableOptionId], references: [id], onDelete: Restrict)
+}
+
+model Alert {
+  id          String        @id @default(cuid())
+  fingerprint String        @unique
+  venueId     String?
+  inquiryId   String?
+  type        String
+  severity    AlertSeverity
+  status      AlertStatus   @default(OPEN)
+  title       String
+  description String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  resolvedAt  DateTime?
+  venue       Venue?        @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  inquiry     Inquiry?      @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+}
+
+model ActivityLog {
+  id          String        @id @default(cuid())
+  actorUserId String?
+  actorVenueUserId String?
+  venueId     String?
+  entityType  String
+  entityId    String?
+  action      String
+  summary     String
+  createdAt   DateTime      @default(now())
+  actor       PlatformUser? @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+  actorVenueUser VenueUser? @relation("ActorVenueUserActivityLogs", fields: [actorVenueUserId], references: [id], onDelete: SetNull)
+  venue       Venue?        @relation(fields: [venueId], references: [id], onDelete: Cascade)
+}
+
+model VenueAsset {
+  id             String               @id @default(cuid())
+  venueId        String
+  type           VenueAssetType
+  label          String
+  fileName       String
+  storagePath    String
+  publicUrl      String
+  mimeType       String
+  active         Boolean              @default(true)
+  eventSeriesId  String?
+  eventOverrideId String?
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  venue          Venue                @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  eventSeries    EventSeries?         @relation(fields: [eventSeriesId], references: [id], onDelete: Cascade)
+  eventOverride  EventOccurrenceOverride? @relation(fields: [eventOverrideId], references: [id], onDelete: Cascade)
+
+  @@index([venueId, type, active])
+  @@index([eventSeriesId, type, active])
+  @@index([eventOverrideId, type, active])
+}
+
+model EventSeries {
+  id             String                  @id @default(cuid())
+  venueId        String
+  title          String
+  description    String?
+  recurringDays  String
+  startDate      DateTime?
+  endDate        DateTime?
+  active         Boolean                 @default(true)
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+  venue          Venue                   @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  assets         VenueAsset[]
+  overrides      EventOccurrenceOverride[]
+
+  @@index([venueId, active])
+}
+
+model EventOccurrenceOverride {
+  id             String       @id @default(cuid())
+  venueId        String
+  eventSeriesId  String?
+  occurrenceDate DateTime
+  title          String?
+  description    String?
+  isCancelled    Boolean      @default(false)
+  active         Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  venue          Venue        @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  eventSeries    EventSeries? @relation(fields: [eventSeriesId], references: [id], onDelete: SetNull)
+  assets         VenueAsset[]
+
+  @@unique([venueId, occurrenceDate])
+  @@index([venueId, active, occurrenceDate])
+}
+
+model VenueUser {
+  id                String         @id @default(cuid())
+  venueId           String
+  email             String         @unique
+  fullName          String
+  role              VenueRole
+  passwordHash      String
+  isActive          Boolean        @default(true)
+  inviteToken       String?        @unique
+  inviteExpiresAt   DateTime?
+  inviteAcceptedAt  DateTime?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  venue             Venue          @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  sessions          VenueSession[]
+  assignedInquiries Inquiry[]      @relation("AssignedInquiryVenueUser")
+  activityLogs      ActivityLog[]  @relation("ActorVenueUserActivityLogs")
+}
+
+model VenueSession {
+  id         String    @id @default(cuid())
+  token      String    @unique
+  userId     String
+  expiresAt  DateTime
+  createdAt  DateTime  @default(now())
+  user       VenueUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

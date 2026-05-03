@@ -1,0 +1,39 @@
+<svg width="640" height="300" viewBox="0 0 640 300" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Ayana</title>
+  <desc id="desc">Ayana wordmark with colorful vertical audio bars.</desc>
+  <defs>
+    <linearGradient id="g1" x1="129" y1="60" x2="190" y2="150" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFB000"/>
+      <stop offset="1" stop-color="#F35A12"/>
+    </linearGradient>
+    <linearGradient id="g2" x1="214" y1="75" x2="214" y2="176" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFD11A"/>
+      <stop offset="1" stop-color="#F58B00"/>
+    </linearGradient>
+    <linearGradient id="g3" x1="272" y1="48" x2="272" y2="210" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#00E08A"/>
+      <stop offset="1" stop-color="#087B61"/>
+    </linearGradient>
+    <linearGradient id="g4" x1="340" y1="0" x2="340" y2="250" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#15C6C8"/>
+      <stop offset="1" stop-color="#015B57"/>
+    </linearGradient>
+    <linearGradient id="g5" x1="410" y1="35" x2="410" y2="218" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#DE009D"/>
+      <stop offset="1" stop-color="#04306D"/>
+    </linearGradient>
+    <linearGradient id="g6" x1="478" y1="80" x2="478" y2="166" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E4007F"/>
+      <stop offset="1" stop-color="#52206F"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(68 0)">
+    <path d="M117 82C93 94 80 112 79 139C78 166 93 186 113 205C117 209 124 206 124 200V90C124 84 121 80 117 82Z" fill="url(#g1)"/>
+    <rect x="143" y="90" width="42" height="92" rx="19" fill="url(#g2)"/>
+    <rect x="205" y="54" width="52" height="154" rx="24" fill="url(#g3)"/>
+    <rect x="276" width="54" height="248" rx="27" fill="url(#g4)"/>
+    <rect x="349" y="35" width="58" height="170" rx="27" fill="url(#g5)"/>
+    <rect x="430" y="74" width="54" height="112" rx="27" fill="url(#g6)"/>
+  </g>
+  <text x="320" y="290" text-anchor="middle" fill="#FFFFFF" font-family="Arial Rounded MT Bold, Arial, Helvetica, sans-serif" font-size="116" font-weight="900" letter-spacing="-8">ayana</text>
+</svg>
