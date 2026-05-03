@@ -174,7 +174,7 @@ export async function listTranscriptReport(
   };
 }
 
-export async function listOperationalReportAll(filters: ReportFilters) {
+export async function listOperationalReportAll(filters: ReportFilters): Promise<OperationalReportRow[]> {
   return prisma.activityLog.findMany({
     where: buildActivityWhere(filters),
     include: {
@@ -185,7 +185,7 @@ export async function listOperationalReportAll(filters: ReportFilters) {
   });
 }
 
-export async function listTranscriptReportAll(filters: ReportFilters) {
+export async function listTranscriptReportAll(filters: ReportFilters): Promise<TranscriptReportRow[]> {
   return prisma.inquiry.findMany({
     where: buildTranscriptWhere(filters),
     include: {
