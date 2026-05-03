@@ -206,7 +206,7 @@ export async function getCurrentUser() {
 export async function requirePlatformUser() {
   const user = await getCurrentUser();
   if (!user) {
-    redirect("/login");
+    redirect("/system");
   }
   return user;
 }

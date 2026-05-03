@@ -20,7 +20,13 @@ export function TopNav({
 }) {
   const pathname = usePathname();
 
-  if (pathname === "/" || pathname === "/login" || pathname.startsWith("/operator") || pathname.startsWith("/widget")) {
+  if (
+    pathname === "/" ||
+    pathname === "/login" ||
+    pathname === "/system" ||
+    pathname.startsWith("/operator") ||
+    pathname.startsWith("/widget")
+  ) {
     return null;
   }
 

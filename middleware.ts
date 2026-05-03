@@ -3,6 +3,7 @@ import { OPERATOR_SESSION_COOKIE, SESSION_COOKIE } from "@/lib/auth-constants";
 
 const PUBLIC_PATHS = [
   "/login",
+  "/system",
   "/operator/login",
   "/api/auth/login",
   "/api/operator/auth/login",
@@ -44,7 +45,7 @@ export function middleware(request: NextRequest) {
     if (operatorSession) {
       return NextResponse.redirect(new URL("/operator", request.url));
     }
-    return NextResponse.redirect(new URL("/login", request.url));
+    return NextResponse.redirect(new URL("/system", request.url));
   }
 
   return NextResponse.next();

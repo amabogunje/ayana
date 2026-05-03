@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
 
   const user = await authenticate(email, password);
   if (!user) {
-    return NextResponse.redirect(new URL("/login?error=invalid", request.url));
+    return NextResponse.redirect(new URL("/system?error=invalid", request.url));
   }
 
   await createSession(user.id);
