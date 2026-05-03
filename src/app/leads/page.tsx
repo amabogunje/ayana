@@ -1,11 +1,19 @@
 import { Mail, Sparkles } from "lucide-react";
-import type { PilotLead } from "@prisma/client";
 import { requirePlatformUser } from "@/lib/auth";
 const roleLabels: Record<string, string> = {
   owner: "Owner",
   manager: "Manager",
   promoter: "Promoter",
   staff: "Staff",
+};
+
+type PilotLeadRow = {
+  id: string;
+  fullName: string;
+  email: string;
+  venueName: string;
+  role: string;
+  createdAt: Date | string | number;
 };
 
 function formatDate(date: Date | string | number) {
@@ -22,9 +30,9 @@ export default async function LeadsPage() {
   await requirePlatformUser();
 
   const { prisma } = await import("@/lib/prisma");
-  const leads: PilotLead[] = await prisma.pilotLead.findMany({
+  const leads = (await prisma.pilotLead.findMany({
     orderBy: { createdAt: "desc" },
-  });
+  })) as PilotLeadRow[];
 
   return (
     <main className="admin-page">
