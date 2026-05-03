@@ -60,9 +60,6 @@ function passwordsMatch(password: string, passwordHash: string) {
 }
 
 export async function ensurePlatformUsersSeeded() {
-  const repository = repo();
-  const count = await repository.platformUser.count();
-
   const seedUsers = [
     {
       email: "owner@getayana.com",
@@ -77,13 +74,10 @@ export async function ensurePlatformUsersSeeded() {
   ];
 
   for (const user of seedUsers) {
-    const existingUser = count > 0
-      ? await repository.platformUser.findUnique({ where: { email: user.email } })
-      : null;
-    if (existingUser) continue;
-
-    await repository.platformUser.create({
-      data: {
+    await prisma.platformUser.upsert({
+      where: { email: user.email },
+      update: {},
+      create: {
         ...user,
         passwordHash: hashPassword(DEFAULT_PASSWORD),
         isActive: true,

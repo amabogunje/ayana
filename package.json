@@ -13,10 +13,11 @@
     "test:watch": "npm run test:db:push && vitest",
     "test:coverage": "npm run test:db:push && vitest run --coverage",
     "test:e2e": "playwright test",
+    "seed:production-demo": "node scripts/seed-production-demo.mjs",
     "verify": "npm run lint && npm run typecheck && npm run test:coverage && npm run test:e2e && npm run build"
   },
   "dependencies": {
-    "@prisma/adapter-better-sqlite3": "^7.7.0",
+    "@prisma/adapter-neon": "^7.8.0",
     "@prisma/client": "^7.7.0",
     "dotenv": "^17.4.2",
     "lucide-react": "^0.546.0",

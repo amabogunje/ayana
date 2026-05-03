@@ -1,4 +1,4 @@
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { PrismaNeon } from "@prisma/adapter-neon";
 import { PrismaClient } from "@prisma/client";
 
 declare global {
@@ -11,10 +11,7 @@ function createPrismaClient() {
     throw new Error("DATABASE_URL is required to initialize Prisma.");
   }
 
-  const adapter = new PrismaBetterSqlite3(
-    { url: databaseUrl },
-    { timestampFormat: "unixepoch-ms" },
-  );
+  const adapter = new PrismaNeon({ connectionString: databaseUrl });
 
   return new PrismaClient({ adapter });
 }

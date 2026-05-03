@@ -17,3 +17,6 @@ playwright-report/
 *-mobile.png
 *-tablet.png
 operator-dashboard-page-full.png
+
+.vercel
+.env*.local
