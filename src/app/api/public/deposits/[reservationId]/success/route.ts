@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { cancelPendingWorkflowTasksForInquiry } from "@/lib/workflow-tasks";
 
 export async function GET(
   request: NextRequest,
@@ -32,6 +33,13 @@ export async function GET(
         status: "CONFIRMED",
         nextAction: "Deposit paid. Reservation confirmed; send final host confirmation.",
       },
+    });
+
+    await cancelPendingWorkflowTasksForInquiry({
+      venueId: reservation.inquiry.venueId,
+      inquiryId: reservation.inquiryId,
+      types: ["UNPAID_DEPOSIT_REMINDER"],
+      reason: "Deposit paid before the reminder was due.",
     });
   }
 

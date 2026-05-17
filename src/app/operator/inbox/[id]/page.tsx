@@ -49,6 +49,26 @@ function splitRequestedDate(label: string) {
   };
 }
 
+function getNextLeadAction(status: string) {
+  if (status === "NEW" || status === "NEEDS_HUMAN") {
+    return { status: "QUALIFYING" as const, label: "Mark responded" };
+  }
+
+  if (status === "QUALIFYING") {
+    return { status: "QUOTED" as const, label: "Mark quoted" };
+  }
+
+  if (status === "QUOTED") {
+    return { status: "DEPOSIT_SENT" as const, label: "Request deposit" };
+  }
+
+  if (status === "DEPOSIT_SENT") {
+    return { status: "CONFIRMED" as const, label: "Mark won" };
+  }
+
+  return null;
+}
+
 export default async function OperatorInquiryDetailPage({
   params,
   searchParams,
@@ -74,6 +94,7 @@ export default async function OperatorInquiryDetailPage({
   const phone = inquiry.phone ?? "";
   const primaryAction = isSecured ? "Confirm booking" : `Send ${depositDueCents ? formatCurrency(depositDueCents) : "deposit"} link`;
   const latestGuestMessage = [...inquiry.messages].reverse().find((message) => message.authorRole === "guest")?.content;
+  const nextLeadAction = getNextLeadAction(inquiry.status);
 
   return (
     <main className="operator-dashboard-page operator-simple-detail-page">
@@ -124,6 +145,15 @@ export default async function OperatorInquiryDetailPage({
           </div>
 
           <div className="operator-simple-action-row">
+            {nextLeadAction ? (
+              <form action={updateOperatorInquiryStatusAction}>
+                <input type="hidden" name="inquiryId" value={inquiry.id} />
+                <input type="hidden" name="status" value={nextLeadAction.status} />
+                <button type="submit" className="operator-secondary-action">
+                  {nextLeadAction.label}
+                </button>
+              </form>
+            ) : null}
             <form action={updateOperatorInquiryStatusAction}>
               <input type="hidden" name="inquiryId" value={inquiry.id} />
               <input type="hidden" name="status" value={isSecured ? "CONFIRMED" : "DEPOSIT_SENT"} />
@@ -132,6 +162,15 @@ export default async function OperatorInquiryDetailPage({
                 {primaryAction}
               </button>
             </form>
+            {inquiry.status !== "LOST" && inquiry.status !== "CONFIRMED" ? (
+              <form action={updateOperatorInquiryStatusAction}>
+                <input type="hidden" name="inquiryId" value={inquiry.id} />
+                <input type="hidden" name="status" value="LOST" />
+                <button type="submit" className="operator-secondary-action">
+                  Disqualify
+                </button>
+              </form>
+            ) : null}
             {phone ? (
               <a href={`tel:${phone}`} className="operator-secondary-action">
                 <Phone size={18} aria-hidden="true" />

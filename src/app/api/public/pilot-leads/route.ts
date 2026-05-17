@@ -5,8 +5,18 @@ import { prisma } from "@/lib/prisma";
 const leadSchema = z.object({
   fullName: z.string().trim().min(2, "Name is required.").max(120),
   email: z.string().trim().email("A valid email is required.").max(160),
-  venueName: z.string().trim().min(2, "Company or venue name is required.").max(160),
-  role: z.enum(["owner", "manager", "promoter", "staff"]),
+  phone: z.preprocess(
+    (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+    z.string().trim().max(40).optional(),
+  ),
+  venueName: z.preprocess(
+    (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+    z.string().trim().max(160).optional(),
+  ),
+  role: z.preprocess(
+    (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+    z.enum(["owner", "manager", "promoter", "other"]).optional(),
+  ),
 });
 
 export async function POST(request: NextRequest) {
@@ -16,8 +26,9 @@ export async function POST(request: NextRequest) {
       data: {
         fullName: body.fullName,
         email: body.email.toLowerCase(),
-        venueName: body.venueName,
-        role: body.role,
+        phone: body.phone ?? null,
+        venueName: body.venueName ?? null,
+        role: body.role ?? null,
         source: "landing_page",
       },
     });

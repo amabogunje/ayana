@@ -11,6 +11,7 @@ const navigation = [
   { href: "/reports", label: "Reports" },
   { href: "/analytics", label: "Analytics" },
   { href: "/settings", label: "Settings" },
+  { href: "/system/evals", label: "System" },
 ];
 
 export function TopNav({

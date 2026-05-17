@@ -1381,6 +1381,22 @@ button {
   color: #f4f8fc;
 }
 
+.operator-app-shell .operator-auth-page .button-primary {
+  color: #fff;
+  background: linear-gradient(135deg, #6b4df5, #8b5cf6);
+}
+
+.operator-app-shell .operator-auth-card {
+  border-color: rgba(130, 108, 255, 0.16);
+  background:
+    radial-gradient(circle at top right, rgba(107, 77, 245, 0.16), transparent 42%),
+    linear-gradient(180deg, rgba(17, 28, 42, 0.95), rgba(12, 20, 32, 0.97));
+}
+
+.operator-app-shell .operator-auth-card .eyebrow {
+  color: #b8a8ff;
+}
+
 .operator-app-shell .button-primary {
   color: #08131d;
   background: linear-gradient(135deg, #d9a95d, #f0cd88);
@@ -6927,6 +6943,248 @@ button {
   outline: none;
 }
 
+.operator-agent-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.operator-agent-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+  gap: 18px;
+  align-items: flex-start;
+}
+
+.operator-agent-main,
+.operator-agent-side {
+  display: grid;
+  gap: 16px;
+}
+
+.operator-agent-source {
+  align-self: flex-start;
+  padding: 8px 10px;
+  border: 1px solid var(--operator-line);
+  border-radius: 8px;
+  color: var(--operator-muted);
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+
+.operator-agent-toggle-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.operator-agent-toggle {
+  min-height: 86px;
+}
+
+.operator-agent-control-status {
+  align-self: flex-start;
+  padding: 6px 8px;
+  border: 1px solid var(--operator-line);
+  border-radius: 8px;
+  color: var(--operator-muted);
+  background: rgba(255, 255, 255, 0.045);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
+.operator-agent-control-note,
+.operator-agent-field-note,
+.operator-agent-runtime-note {
+  color: var(--operator-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.operator-agent-field-note {
+  display: block;
+  margin-top: 8px;
+}
+
+.operator-agent-runtime-note {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--operator-line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.operator-agent-toggle input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  accent-color: #7d66ff;
+}
+
+.operator-agent-textarea-control {
+  align-items: flex-start;
+  min-height: auto;
+  padding-block: 14px;
+}
+
+.operator-agent-textarea-control svg {
+  margin-top: 8px;
+}
+
+.operator-agent-preview,
+.operator-agent-save-panel {
+  display: grid;
+  gap: 16px;
+  padding: 22px;
+}
+
+.operator-agent-preview h3 {
+  margin: 8px 0 8px;
+  color: var(--operator-text);
+}
+
+.operator-agent-preview p {
+  margin: 0;
+  color: var(--operator-muted);
+  line-height: 1.55;
+}
+
+.operator-agent-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.operator-agent-chip-list span {
+  padding: 7px 9px;
+  border: 1px solid var(--operator-line);
+  border-radius: 8px;
+  color: var(--operator-text);
+  background: rgba(255, 255, 255, 0.055);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.operator-agent-save-panel > div {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  color: var(--operator-muted);
+  font-weight: 800;
+}
+
+.operator-agent-save-panel > div svg {
+  color: #00d68f;
+  flex: 0 0 auto;
+}
+
+.operator-agent-save-panel .operator-primary-action,
+.operator-agent-save-panel .operator-secondary-action {
+  width: 100%;
+  justify-content: center;
+}
+
+.agent-runs-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+  gap: 12px;
+  align-items: end;
+  margin-top: 18px;
+}
+
+.agent-run-list {
+  display: grid;
+  gap: 18px;
+  margin-top: 22px;
+}
+
+.agent-run-card {
+  margin: 0;
+}
+
+.agent-run-card-head {
+  display: flex;
+  gap: 18px;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.agent-run-card-head h3 {
+  margin: 6px 0;
+  color: var(--ink);
+}
+
+.agent-run-card-head p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.agent-run-status-stack {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.agent-run-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+  margin: 18px 0;
+}
+
+.agent-run-meta-grid > div {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-muted);
+}
+
+.agent-run-meta-grid span {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+
+.agent-run-meta-grid strong {
+  display: block;
+  overflow-wrap: anywhere;
+  color: var(--ink);
+  font-size: 0.9rem;
+}
+
+.agent-run-link-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.agent-tool-details {
+  margin-top: 18px;
+}
+
+.agent-tool-details summary {
+  cursor: pointer;
+  color: var(--ink);
+  font-weight: 800;
+}
+
 .operator-settings-form .hours-summary-card,
 .operator-settings-form .detail-row,
 .operator-settings-form .operator-service-option {
@@ -7695,6 +7953,11 @@ button {
     grid-template-columns: 1fr;
   }
 
+  .operator-agent-grid,
+  .operator-agent-toggle-grid {
+    grid-template-columns: 1fr;
+  }
+
   .operator-staff-add-grid {
     grid-template-columns: 1fr;
   }
@@ -7875,6 +8138,11 @@ button {
 }
 
 @media (max-width: 760px) {
+  .operator-agent-header-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
   .admin-page {
     width: min(100% - 20px, 1240px);
     padding-bottom: 40px;
@@ -8432,7 +8700,7 @@ button {
 .landing-hero-copy p {
   max-width: 480px;
   margin: 24px 0 0;
-  color: var(--landing-muted);
+  color: var(--landing-text);
   font-size: 18px;
   font-weight: 400;
   line-height: 28px;
@@ -8448,6 +8716,15 @@ button {
 
 .landing-hero-copy .landing-hero-support + p {
   margin-top: 16px;
+}
+
+.landing-hero-copy .landing-hero-punchline {
+  max-width: 480px;
+  margin-top: 14px;
+  color: var(--landing-muted);
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 28px;
 }
 
 .landing-actions {
@@ -8616,6 +8893,7 @@ button {
 
 .landing-how {
   min-height: 460px;
+  padding: 56px 0;
   background: #101018;
 }
 
@@ -8629,11 +8907,37 @@ button {
   text-align: center;
 }
 
+.landing-how-showcase .landing-how-workflow h2 {
+  text-align: left;
+}
+
 .landing-step-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 32px;
   margin-top: 56px;
+}
+
+.landing-how-showcase {
+  display: grid;
+  grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+  gap: 48px;
+  align-items: stretch;
+  margin-top: 0;
+}
+
+.landing-how-workflow {
+  min-height: 585px;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+
+.landing-how-showcase .landing-step-grid {
+  grid-template-columns: 1fr;
+  grid-template-rows: repeat(4, minmax(0, 1fr));
+  align-content: stretch;
+  gap: 10px;
+  margin-top: 18px;
 }
 
 .landing-step {
@@ -8645,6 +8949,15 @@ button {
   transition: border-color 200ms ease-out, box-shadow 200ms ease-out;
 }
 
+.landing-how-showcase .landing-step {
+  min-height: auto;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+  padding: 14px 18px;
+}
+
 .landing-step-icon {
   display: inline-flex;
   align-items: center;
@@ -8652,6 +8965,16 @@ button {
   width: 48px;
   height: 48px;
   color: var(--landing-accent);
+}
+
+.landing-how-showcase .landing-step-icon {
+  width: 42px;
+  height: 42px;
+}
+
+.landing-how-showcase .landing-step-icon svg {
+  width: 42px;
+  height: 42px;
 }
 
 .landing-step h3,
@@ -8667,11 +8990,153 @@ button {
   white-space: nowrap;
 }
 
+.landing-how-showcase .landing-step h3 {
+  margin-top: 0;
+}
+
 .landing-step p,
 .landing-pilot-step p {
   margin: 8px 0 0;
   font-size: 14px;
   line-height: 20px;
+}
+
+.landing-iphone-frame {
+  position: relative;
+  justify-self: center;
+  width: min(270px, 100%);
+  aspect-ratio: 9 / 19.5;
+  padding: 18px 10px;
+  border: 1px solid rgba(245, 245, 247, 0.16);
+  border-radius: 38px;
+  background: linear-gradient(145deg, #050507, #181820);
+  box-shadow: 0 34px 90px rgba(0, 0, 0, 0.46);
+}
+
+.landing-iphone-frame::before {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 36px;
+  pointer-events: none;
+}
+
+.landing-iphone-speaker {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  z-index: 2;
+  width: 74px;
+  height: 20px;
+  border-radius: 999px;
+  background: #050507;
+  transform: translateX(-50%);
+}
+
+.landing-whatsapp-phone {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid rgba(7, 94, 84, 0.34);
+  border-radius: 28px;
+  background: #efeae2;
+  box-shadow: none;
+}
+
+.landing-whatsapp-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: #075e54;
+}
+
+.landing-whatsapp-header > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  color: #075e54;
+  background: #d9fdd3;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.landing-whatsapp-header strong,
+.landing-whatsapp-header small {
+  display: block;
+}
+
+.landing-whatsapp-header strong {
+  color: #ffffff;
+  font-size: 14px;
+  line-height: 18px;
+}
+
+.landing-whatsapp-header small {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 11px;
+  line-height: 15px;
+}
+
+.landing-whatsapp-thread {
+  flex: 1;
+  display: grid;
+  gap: 7px;
+  align-content: end;
+  padding: 12px;
+}
+
+.landing-whatsapp-bubble {
+  max-width: 88%;
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  color: #111b21;
+  font-size: 11px;
+  line-height: 15px;
+}
+
+.landing-whatsapp-inbound {
+  justify-self: end;
+  background: #d9fdd3;
+  border-bottom-right-radius: 3px;
+}
+
+.landing-whatsapp-outbound {
+  justify-self: start;
+  background: #ffffff;
+  border-bottom-left-radius: 3px;
+}
+
+.landing-whatsapp-link {
+  justify-self: start;
+  width: 88%;
+  padding: 10px 12px;
+  border-left: 3px solid #25d366;
+  border-radius: 9px;
+  background: #ffffff;
+}
+
+.landing-whatsapp-link span,
+.landing-whatsapp-link strong {
+  display: block;
+}
+
+.landing-whatsapp-link span {
+  color: #667781;
+  font-size: 11px;
+  line-height: 15px;
+}
+
+.landing-whatsapp-link strong {
+  color: #075e54;
+  font-size: 13px;
+  line-height: 18px;
 }
 
 .landing-bottom-line {
@@ -8680,6 +9145,11 @@ button {
   font-size: 16px;
   line-height: 24px;
   text-align: center;
+}
+
+.landing-how-workflow .landing-bottom-line {
+  margin: 14px 0 0;
+  text-align: left;
 }
 
 .landing-value {
@@ -8764,7 +9234,8 @@ button {
 }
 
 .landing-pilot {
-  min-height: 440px;
+  min-height: auto;
+  padding: 72px 0;
   background: #101018;
 }
 
@@ -8895,9 +9366,25 @@ button {
 }
 
 .lead-dialog-form label span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   color: #52525b;
   font-size: 13px;
   font-weight: 700;
+}
+
+.lead-dialog-form label strong {
+  color: var(--landing-accent);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.lead-dialog-form label em {
+  color: #8a8a96;
+  font-style: normal;
+  font-weight: 500;
 }
 
 .lead-dialog-form input,
@@ -9098,7 +9585,7 @@ button {
   .landing-impact,
   .landing-pilot {
     min-height: auto;
-    padding: 64px 0;
+    padding: 56px 0;
   }
 
   .landing-how h2,
@@ -9109,6 +9596,39 @@ button {
 
   .landing-step-grid {
     margin-top: 48px;
+  }
+
+  .landing-how-showcase {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  .landing-how-workflow {
+    order: 1;
+  }
+
+  .landing-iphone-frame {
+    order: 2;
+  }
+
+  .landing-how-showcase .landing-how-workflow h2 {
+    text-align: center;
+  }
+
+  .landing-how-workflow {
+    min-height: auto;
+  }
+
+  .landing-how-showcase .landing-step-grid {
+    margin-top: 32px;
+  }
+
+  .landing-how-workflow .landing-bottom-line {
+    text-align: center;
+  }
+
+  .landing-iphone-frame {
+    width: min(270px, 100%);
   }
 
   .landing-step h3 {
@@ -9127,6 +9647,7 @@ button {
 }
 
 .landing-product-ui {
+  position: relative;
   grid-column: 6 / span 7;
   width: min(680px, 100%);
   justify-self: end;
@@ -9212,7 +9733,7 @@ button {
   position: relative;
   overflow: hidden;
   min-height: auto;
-  padding: 88px 0;
+  padding: 72px 0;
   background: #030306;
 }
 
@@ -9313,7 +9834,7 @@ button {
 
   .landing-owner-section {
     min-height: auto;
-    padding: 64px 0;
+    padding: 56px 0;
   }
 
   .landing-owner-section::before {
@@ -9357,7 +9878,7 @@ button {
 
   .landing-product-ui {
     width: 100%;
-    margin-top: 48px;
+    margin-top: 24px;
   }
 
   .landing-product-topline,

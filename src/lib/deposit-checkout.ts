@@ -2,10 +2,15 @@ import { getPlatformConfig, getResolvedStripeSecretKey } from "@/lib/platform-co
 
 type DepositCheckoutInput = {
   reservationId: string;
+  venueId: string;
   venueName: string;
   tableName: string;
   guestName: string;
   depositAmountCents: number;
+  checkoutMode: "MOCK" | "STRIPE_CONNECT";
+  stripeConnectAccountId?: string | null;
+  stripeChargesEnabled?: boolean;
+  stripePayoutsEnabled?: boolean;
 };
 
 export type DepositCheckoutResult = {
@@ -18,8 +23,21 @@ export async function createDepositCheckout(input: DepositCheckoutInput): Promis
   const stripeSecretKey = getResolvedStripeSecretKey(platformConfig.stripeSecretKey);
   const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/+$/, "");
 
-  if (!stripeSecretKey || !appUrl || input.depositAmountCents <= 0) {
+  if (!appUrl || input.depositAmountCents <= 0) {
     return null;
+  }
+
+  if (
+    input.checkoutMode === "MOCK" ||
+    !stripeSecretKey ||
+    !input.stripeConnectAccountId ||
+    !input.stripeChargesEnabled
+  ) {
+    const sessionId = `mock_${input.reservationId}`;
+    return {
+      url: `${appUrl}/api/public/deposits/${input.reservationId}/mock?session_id=${sessionId}`,
+      sessionId,
+    };
   }
 
   const params = new URLSearchParams();
@@ -39,12 +57,16 @@ export async function createDepositCheckout(input: DepositCheckoutInput): Promis
     "line_items[0][price_data][product_data][description]",
     `Deposit to reserve ${input.tableName} for ${input.guestName}.`,
   );
+  params.set("payment_intent_data[application_fee_amount]", String(Math.round(input.depositAmountCents * (platformConfig.stripeApplicationFeeBps / 10_000))));
+  params.set("payment_intent_data[metadata][reservationId]", input.reservationId);
+  params.set("payment_intent_data[metadata][venueId]", input.venueId);
 
   const response = await fetch("https://api.stripe.com/v1/checkout/sessions", {
     method: "POST",
     headers: {
       authorization: `Bearer ${stripeSecretKey}`,
       "content-type": "application/x-www-form-urlencoded",
+      "stripe-account": input.stripeConnectAccountId,
     },
     body: params,
   });

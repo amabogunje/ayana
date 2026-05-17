@@ -1,0 +1,9 @@
+{
+  "buildCommand": "npm run build",
+  "crons": [
+    {
+      "path": "/api/workflows/process",
+      "schedule": "*/15 * * * *"
+    }
+  ]
+}

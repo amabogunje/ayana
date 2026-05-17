@@ -1,9 +1,45 @@
 import { randomUUID } from "node:crypto";
 import { prisma } from "@/lib/prisma";
-import { runWebsiteChatAgent } from "@/lib/website-chat-agent";
+import { runSharedAgentRuntime } from "@/lib/agent/agent-runner";
+import {
+  createWebsiteChatConversationSnapshot,
+  createWebsiteChatMessageReceivedEvent,
+} from "@/lib/conversation/message-normalizer";
 
 function normalizeOrigin(value: string) {
   return value.trim().replace(/\/+$/, "").toLowerCase();
+}
+
+function extractWebsiteChatOpeningSignals(message: string) {
+  const lower = message.toLowerCase();
+  const digitsOnly = message.replace(/\D/g, "");
+  const partyMatch =
+    lower.match(/\b(\d{1,2})\s*(people|person|guests|guest|girls|guys)\b/) ??
+    lower.match(/\b(?:we'?re|we are|make that|actually|it'?s|its)\s+(\d{1,2})\b/);
+
+  let requestedDateLabel: string | null = null;
+  if (lower.includes("tomorrow")) requestedDateLabel = "Tomorrow";
+  else if (lower.includes("tonight") || lower.includes("today")) requestedDateLabel = "Tonight";
+  else {
+    const weekdayMatch = lower.match(
+      /\b(this|next)?\s*(sunday|sun|monday|mon|tuesday|tue|tues|wednesday|wed|thursday|thu|thur|thurs|friday|fri|saturday|sat)\b/,
+    );
+    if (weekdayMatch) {
+      const rawDay = weekdayMatch[2] ?? "";
+      const weekday = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].find((label) =>
+        label.toLowerCase().startsWith(rawDay.slice(0, 3)),
+      );
+      if (weekday) {
+        requestedDateLabel = weekdayMatch[1] === "next" ? `Next ${weekday}` : weekday;
+      }
+    }
+  }
+
+  return {
+    requestedDateLabel,
+    partySize: partyMatch ? Number.parseInt(partyMatch[1] ?? "", 10) : /^\s*\d{1,2}\s*$/.test(message.trim()) ? Number.parseInt(message.trim(), 10) : null,
+    phone: digitsOnly.length >= 10 && digitsOnly.length <= 11 ? digitsOnly : null,
+  };
 }
 
 export function isWebsiteChatListedInChannels(channelsSummary: string | null | undefined) {
@@ -171,18 +207,19 @@ export async function startWebsiteChatSession(input: {
 
   const now = new Date();
   const guestOpeningMessage = input.message?.trim();
-  const introPrompt = `Hi ${input.guestName.split(" ")[0] || "there"}, welcome to ${venue.name}. Tell us what date you’re looking for, your group size, and the kind of table or budget you have in mind.`;
+  const openingSignals = guestOpeningMessage ? extractWebsiteChatOpeningSignals(guestOpeningMessage) : null;
+  const introPrompt = `Hi ${input.guestName.split(" ")[0] || "there"}, welcome to ${venue.name}. Tell us what date you’re looking for and your group size, and I’ll show you the best available table options.`;
   const inquiry = await prisma.inquiry.create({
     data: {
       venueId: venue.id,
       guestName: input.guestName,
-      phone: input.phone || null,
+      phone: input.phone || openingSignals?.phone || null,
       channel: "WEBSITE_CHAT",
       status: "NEW",
       requestedAt: now,
       lastInboundAt: guestOpeningMessage ? now : null,
-      requestedDateLabel: input.requestedDateLabel || "Not provided yet",
-      partySize: input.partySize ?? 1,
+      requestedDateLabel: input.requestedDateLabel || openingSignals?.requestedDateLabel || "Not provided yet",
+      partySize: input.partySize ?? openingSignals?.partySize ?? 1,
       spendIntentLabel: input.spendIntentLabel || "Not provided yet",
       spendIntentMinCents: input.spendIntentMinCents ?? null,
       spendIntentMaxCents: input.spendIntentMaxCents ?? null,
@@ -210,7 +247,7 @@ export async function startWebsiteChatSession(input: {
           venueId: venue.id,
           sessionToken: makeWebsiteChatSessionToken(),
           guestDisplayName: input.guestName,
-          guestPhone: input.phone || null,
+          guestPhone: input.phone || openingSignals?.phone || null,
           guestEmail: input.email || null,
           origin: input.origin ? normalizeOrigin(input.origin) : null,
           lastSeenAt: now,
@@ -357,9 +394,27 @@ export async function addWebsiteChatGuestMessage(input: {
     },
   });
 
-  await runWebsiteChatAgent({
+  const event = createWebsiteChatMessageReceivedEvent({
+    venueId: session.venueId,
     inquiryId: session.inquiryId,
-    guestMessageId: message.id,
+    sessionId: session.id,
+    origin: input.origin,
+    message,
+    occurredAt: now,
+  });
+  const conversation = createWebsiteChatConversationSnapshot({
+    inquiry: {
+      ...session.inquiry,
+      status: session.inquiry.status === "LOST" ? "NEW" : session.inquiry.status,
+      messages: [...session.inquiry.messages, message],
+      nextAction: "Continue qualification and move toward quote or deposit in website chat.",
+    },
+  });
+
+  await runSharedAgentRuntime({
+    venueId: session.venueId,
+    conversation,
+    event,
   });
 
   return {

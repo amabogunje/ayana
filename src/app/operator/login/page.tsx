@@ -11,11 +11,11 @@ export default async function OperatorLoginPage() {
   const defaults = await getOperatorLoginDefaults();
 
   return (
-    <main className="auth-page">
-      <section className="auth-card">
-        <span className="eyebrow">Venue Operator Login</span>
-        <h1>Sign in to your venue workspace</h1>
-        <p>Use a venue-scoped operator account to manage live inquiries, reservations, and venue settings.</p>
+    <main className="auth-page operator-auth-page">
+      <section className="auth-card operator-auth-card">
+        <span className="eyebrow">Ayana for Venues</span>
+        <h1>Sign in to your venue dashboard</h1>
+        <p>Manage guest conversations, reservations, and venue details from one place.</p>
         <OperatorLoginForm defaults={defaults} />
       </section>
     </main>

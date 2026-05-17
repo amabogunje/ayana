@@ -4,6 +4,7 @@ const roleLabels: Record<string, string> = {
   owner: "Owner",
   manager: "Manager",
   promoter: "Promoter",
+  other: "Other",
   staff: "Staff",
 };
 
@@ -11,8 +12,9 @@ type PilotLeadRow = {
   id: string;
   fullName: string;
   email: string;
-  venueName: string;
-  role: string;
+  phone: string | null;
+  venueName: string | null;
+  role: string | null;
   createdAt: Date | string | number;
 };
 
@@ -63,6 +65,7 @@ export default async function LeadsPage() {
                 <tr>
                   <th>Name</th>
                   <th>Email</th>
+                  <th>Phone</th>
                   <th>Company / venue</th>
                   <th>Role</th>
                   <th>Submitted</th>
@@ -72,16 +75,21 @@ export default async function LeadsPage() {
               <tbody>
                 {leads.length === 0 ? (
                   <tr>
-                    <td colSpan={6}>No pilot leads yet. New submissions from the landing page will appear here.</td>
+                    <td colSpan={7}>No pilot leads yet. New submissions from the landing page will appear here.</td>
                   </tr>
                 ) : (
                   leads.map((lead) => (
                     <tr key={lead.id}>
                       <td>{lead.fullName}</td>
                       <td>{lead.email}</td>
-                      <td>{lead.venueName}</td>
+                      <td>{lead.phone ?? "—"}</td>
+                      <td>{lead.venueName ?? "—"}</td>
                       <td>
-                        <span className="status-chip neutral">{roleLabels[lead.role] ?? lead.role}</span>
+                        {lead.role ? (
+                          <span className="status-chip neutral">{roleLabels[lead.role] ?? lead.role}</span>
+                        ) : (
+                          "—"
+                        )}
                       </td>
                       <td>{formatDate(lead.createdAt)}</td>
                       <td>

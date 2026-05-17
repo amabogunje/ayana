@@ -6,6 +6,8 @@ type PlatformConfigRecord = {
   id: string;
   openAIApiKey: string | null;
   stripeSecretKey: string | null;
+  stripeConnectClientId: string | null;
+  stripeApplicationFeeBps: number;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -41,6 +43,8 @@ export async function getPlatformConfig() {
       id: PLATFORM_CONFIG_ID,
       openAIApiKey: null,
       stripeSecretKey: null,
+      stripeConnectClientId: null,
+      stripeApplicationFeeBps: 1000,
     },
   });
 }
@@ -53,6 +57,8 @@ export async function setOpenAIApiKey(openAIApiKey: string | null) {
     create: {
       id: PLATFORM_CONFIG_ID,
       openAIApiKey,
+      stripeConnectClientId: null,
+      stripeApplicationFeeBps: 1000,
     },
   });
 }
@@ -66,6 +72,29 @@ export async function setStripeSecretKey(stripeSecretKey: string | null) {
       id: PLATFORM_CONFIG_ID,
       openAIApiKey: null,
       stripeSecretKey,
+      stripeConnectClientId: null,
+      stripeApplicationFeeBps: 1000,
+    },
+  });
+}
+
+export async function setStripeConnectSettings(input: {
+  stripeConnectClientId: string | null;
+  stripeApplicationFeeBps: number;
+}) {
+  const repository = repo();
+  return repository.platformConfig.upsert({
+    where: { id: PLATFORM_CONFIG_ID },
+    update: {
+      stripeConnectClientId: input.stripeConnectClientId,
+      stripeApplicationFeeBps: input.stripeApplicationFeeBps,
+    },
+    create: {
+      id: PLATFORM_CONFIG_ID,
+      openAIApiKey: null,
+      stripeSecretKey: null,
+      stripeConnectClientId: input.stripeConnectClientId,
+      stripeApplicationFeeBps: input.stripeApplicationFeeBps,
     },
   });
 }

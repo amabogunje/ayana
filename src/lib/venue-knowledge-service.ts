@@ -2,6 +2,25 @@ import { prisma } from "@/lib/prisma";
 
 const weekdayOrder = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"] as const;
 type WeekdayKey = (typeof weekdayOrder)[number];
+const weekdayLookup: Record<string, WeekdayKey> = {
+  sunday: "SUN",
+  sun: "SUN",
+  monday: "MON",
+  mon: "MON",
+  tuesday: "TUE",
+  tue: "TUE",
+  tues: "TUE",
+  wednesday: "WED",
+  wed: "WED",
+  thursday: "THU",
+  thu: "THU",
+  thur: "THU",
+  thurs: "THU",
+  friday: "FRI",
+  fri: "FRI",
+  saturday: "SAT",
+  sat: "SAT",
+};
 
 function parseRecurringDays(value: string) {
   return value
@@ -18,9 +37,45 @@ function toIsoDate(value: Date) {
   return value.toISOString().slice(0, 10);
 }
 
+function nextDateForWeekday(baseDate: Date, weekday: WeekdayKey) {
+  const targetIndex = weekdayOrder.indexOf(weekday);
+  const currentIndex = baseDate.getUTCDay();
+  const offset = (targetIndex - currentIndex + 7) % 7;
+  const resolved = new Date(baseDate);
+  resolved.setUTCDate(baseDate.getUTCDate() + offset);
+  return resolved;
+}
+
 function normalizeDateInput(value?: string | Date | null) {
   if (!value) return null;
   if (value instanceof Date) return value;
+  const normalizedText = value.trim().toLowerCase();
+
+  if (normalizedText === "tonight" || normalizedText === "today") {
+    return new Date();
+  }
+
+  if (normalizedText === "tomorrow") {
+    const tomorrow = new Date();
+    tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+    return tomorrow;
+  }
+
+  const weekdayPhrase = normalizedText.match(
+    /\b(?:this|next)?\s*(sunday|sun|monday|mon|tuesday|tue|tues|wednesday|wed|thursday|thu|thur|thurs|friday|fri|saturday|sat)\b/,
+  );
+  if (weekdayPhrase) {
+    const weekday = weekdayLookup[weekdayPhrase[1] ?? ""];
+    if (weekday) {
+      const baseDate = new Date();
+      const resolved = nextDateForWeekday(baseDate, weekday);
+      if (normalizedText.startsWith("next ")) {
+        resolved.setUTCDate(resolved.getUTCDate() + 7);
+      }
+      return resolved;
+    }
+  }
+
   const normalized = new Date(`${value}T00:00:00.000Z`);
   return Number.isNaN(normalized.getTime()) ? null : normalized;
 }

@@ -22,11 +22,18 @@ import type {
   OperatorOverviewReservation,
   OperatorReservationItem,
   OperatorTableOption,
+  OperatorVenueAgentSettings,
   OperatorVenueAsset,
   OperatorVenueUserOption,
   OperatorVenueSettings,
+  OperatorWorkflowTaskItem,
 } from "@/lib/operator-types";
 import { parseRecurringDays } from "@/lib/venue-knowledge-service";
+import {
+  buildVenueAgentConfigFromVenueCompatibility,
+  getVenueAgentConfigForVenue,
+} from "@/lib/venue-agent/venue-agent-config-service";
+import type { VenueAgentAutonomyLevel } from "@/lib/venue-agent/venue-agent-types";
 
 const allowedInquiryTransitions: Record<
   "NEW" | "QUALIFYING" | "QUOTED" | "DEPOSIT_SENT" | "CONFIRMED" | "NEEDS_HUMAN" | "LOST",
@@ -51,6 +58,68 @@ const allowedReservationTransitions: Record<
   CANCELLED: [],
 };
 
+export type OperatorVenueAgentConfigInput = {
+  enabled: boolean;
+  agentName: string;
+  brandVoice: string;
+  autonomyLevel: number;
+  canAnswerFaqs: boolean;
+  canQualifyLeads: boolean;
+  canRecommendPackages: boolean;
+  canCreateQuotes: boolean;
+  canSendDepositLinks: boolean;
+  canCreateReservations: boolean;
+  confidenceThreshold: number;
+  escalateOnLowConfidence: boolean;
+  escalateForVipRequests: boolean;
+  escalateForUnavailableInventory: boolean;
+  escalateForOversizedParty: boolean;
+  partySizeThreshold?: number | null;
+  websiteChatEnabled: boolean;
+  advancedInstructions: string;
+};
+
+function clampOperatorAutonomyLevel(value: number): VenueAgentAutonomyLevel {
+  if (!Number.isFinite(value)) return 0;
+  if (value <= 0) return 0;
+  if (value >= 5) return 5;
+  return Math.round(value) as VenueAgentAutonomyLevel;
+}
+
+function validateAgentText(value: string, label: string, maxLength: number) {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    throw new Error(`${label} is required.`);
+  }
+  if (trimmed.length > maxLength) {
+    throw new Error(`${label} must be ${maxLength} characters or fewer.`);
+  }
+  return trimmed;
+}
+
+function validateOptionalAgentText(value: string, label: string, maxLength: number) {
+  const trimmed = value.trim();
+  if (trimmed.length > maxLength) {
+    throw new Error(`${label} must be ${maxLength} characters or fewer.`);
+  }
+  return trimmed || null;
+}
+
+function validateConfidenceThreshold(value: number) {
+  if (!Number.isFinite(value) || value < 0 || value > 1) {
+    throw new Error("Confidence threshold must be between 0 and 1.");
+  }
+  return Number(value.toFixed(2));
+}
+
+function validatePartySizeThreshold(value: number | null | undefined) {
+  if (value === null || value === undefined || Number.isNaN(value)) return null;
+  if (!Number.isFinite(value) || value < 1 || value > 999) {
+    throw new Error("Party size threshold must be between 1 and 999 guests.");
+  }
+  return Math.round(value);
+}
+
 function formatRelative(date: Date) {
   const diffMs = Date.now() - new Date(date).getTime();
   const minutes = Math.max(1, Math.round(diffMs / 60000));
@@ -72,6 +141,15 @@ function formatShortDate(date: Date) {
   return new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "numeric",
+  }).format(date);
+}
+
+function formatDateTime(date: Date) {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
   }).format(date);
 }
 
@@ -580,6 +658,7 @@ export async function addOperatorMessage(
     select: {
       id: true,
       guestName: true,
+      status: true,
     },
   });
 
@@ -599,6 +678,11 @@ export async function addOperatorMessage(
     where: { id: inquiry.id },
     data: {
       lastOutboundAt: new Date(),
+      status:
+        inquiry.status === "NEW" || inquiry.status === "NEEDS_HUMAN"
+          ? "QUALIFYING"
+          : undefined,
+      isHumanTakeover: false,
       nextAction: "Await guest reply or continue follow-up.",
     },
   });
@@ -1229,6 +1313,11 @@ export async function getOperatorVenueSettings(venueId: string): Promise<Operato
     websiteChatAllowedOrigins: venue.websiteChatAllowedOrigins,
     websiteChatWelcomeMessage: venue.websiteChatWelcomeMessage,
       websiteChatPromptPlaceholder: venue.websiteChatPromptPlaceholder,
+      depositCheckoutMode: venue.depositCheckoutMode,
+      stripeConnectAccountId: venue.stripeConnectAccountId,
+      stripeOnboardingComplete: venue.stripeOnboardingComplete,
+      stripeChargesEnabled: venue.stripeChargesEnabled,
+      stripePayoutsEnabled: venue.stripePayoutsEnabled,
       websiteChatInstallSnippet:
         venue.websiteChatWidgetKey && process.env.NEXT_PUBLIC_APP_URL
           ? buildWebsiteChatSnippet({
@@ -1249,6 +1338,225 @@ export async function getOperatorVenueSettings(venueId: string): Promise<Operato
         createdAt: asset.createdAt.toISOString(),
       })),
     };
+}
+
+export async function getOperatorVenueAgentSettings(venueId: string): Promise<OperatorVenueAgentSettings | null> {
+  const venue = await prisma.venue.findUnique({
+    where: { id: venueId },
+    select: {
+      id: true,
+      name: true,
+      brandTone: true,
+      aiEnabled: true,
+      websiteChatEnabled: true,
+      websiteChatWidgetKey: true,
+    },
+  });
+
+  if (!venue) return null;
+
+  const config = await getVenueAgentConfigForVenue({
+    venueId: venue.id,
+    venueName: venue.name,
+    brandTone: venue.brandTone,
+    aiEnabled: venue.aiEnabled,
+    websiteChatEnabled: venue.websiteChatEnabled,
+  });
+
+  return {
+    venue,
+    config: {
+      id: config.id,
+      source: config.source,
+      enabled: config.enabled,
+      agentName: config.agentName,
+      brandVoice: config.brandVoice,
+      autonomyLevel: config.autonomyLevel,
+      confidenceThreshold: config.confidenceThreshold,
+      enabledChannels: config.enabledChannels,
+      actionPermissions: config.actionPermissions,
+      escalationRules: config.escalationRules,
+      followUpRules: config.followUpRules,
+      advancedInstructions: config.advancedInstructions,
+    },
+  };
+}
+
+export async function updateOperatorVenueAgentConfig(
+  venueId: string,
+  input: OperatorVenueAgentConfigInput,
+  actorVenueUserId?: string,
+) {
+  const venue = await prisma.venue.findUnique({
+    where: { id: venueId },
+    select: {
+      id: true,
+      name: true,
+      brandTone: true,
+      aiEnabled: true,
+      websiteChatEnabled: true,
+    },
+  });
+
+  if (!venue) {
+    throw new Error("Venue not found.");
+  }
+
+  const agentName = validateAgentText(input.agentName, "Agent name", 80);
+  const brandVoice = validateAgentText(input.brandVoice, "Brand voice", 800);
+  const advancedInstructions = validateOptionalAgentText(input.advancedInstructions, "Advanced instructions", 3000);
+  const autonomyLevel = clampOperatorAutonomyLevel(input.autonomyLevel);
+  const confidenceThreshold = validateConfidenceThreshold(input.confidenceThreshold);
+  const partySizeThreshold = validatePartySizeThreshold(input.partySizeThreshold);
+  const enabledChannels = input.websiteChatEnabled ? "WEBSITE_CHAT" : "";
+
+  const updated = await prisma.venueAgentConfig.upsert({
+    where: { venueId },
+    create: {
+      venueId,
+      enabled: input.enabled,
+      agentName,
+      brandVoice,
+      autonomyLevel,
+      canAnswerFaqs: input.canAnswerFaqs,
+      canQualifyLeads: input.canQualifyLeads,
+      canRecommendPackages: input.canRecommendPackages,
+      canCreateQuotes: input.canCreateQuotes,
+      canSendDepositLinks: input.canSendDepositLinks,
+      canCreateReservations: input.canCreateReservations,
+      confidenceThreshold,
+      escalationRules: {
+        escalateOnLowConfidence: input.escalateOnLowConfidence,
+        lowConfidenceThreshold: confidenceThreshold,
+        escalateForVipRequests: input.escalateForVipRequests,
+        escalateForUnavailableInventory: input.escalateForUnavailableInventory,
+        escalateForOversizedParty: input.escalateForOversizedParty,
+        partySizeThreshold,
+      },
+      followUpRules: {
+        enabled: false,
+        unpaidDepositReminderHours: null,
+        abandonedChatReminderHours: null,
+      },
+      advancedInstructions,
+      enabledChannels,
+    },
+    update: {
+      enabled: input.enabled,
+      agentName,
+      brandVoice,
+      autonomyLevel,
+      canAnswerFaqs: input.canAnswerFaqs,
+      canQualifyLeads: input.canQualifyLeads,
+      canRecommendPackages: input.canRecommendPackages,
+      canCreateQuotes: input.canCreateQuotes,
+      canSendDepositLinks: input.canSendDepositLinks,
+      canCreateReservations: input.canCreateReservations,
+      confidenceThreshold,
+      escalationRules: {
+        escalateOnLowConfidence: input.escalateOnLowConfidence,
+        lowConfidenceThreshold: confidenceThreshold,
+        escalateForVipRequests: input.escalateForVipRequests,
+        escalateForUnavailableInventory: input.escalateForUnavailableInventory,
+        escalateForOversizedParty: input.escalateForOversizedParty,
+        partySizeThreshold,
+      },
+      advancedInstructions,
+      enabledChannels,
+    },
+  });
+
+  await logOperatorActivity({
+    actorVenueUserId,
+    venueId,
+    entityType: "venue_agent_config",
+    entityId: updated.id,
+    action: "operator.agent_config_updated",
+    summary: `Updated AI agent settings for ${venue.name}.`,
+  });
+
+  revalidatePath("/operator/settings/agent");
+  revalidatePath("/operator/settings");
+
+  return updated;
+}
+
+export async function resetOperatorVenueAgentConfig(venueId: string, actorVenueUserId?: string) {
+  const venue = await prisma.venue.findUnique({
+    where: { id: venueId },
+    select: {
+      id: true,
+      name: true,
+      brandTone: true,
+      aiEnabled: true,
+      websiteChatEnabled: true,
+    },
+  });
+
+  if (!venue) {
+    throw new Error("Venue not found.");
+  }
+
+  const defaults = buildVenueAgentConfigFromVenueCompatibility({
+    venueId: venue.id,
+    venueName: venue.name,
+    brandTone: venue.brandTone,
+    aiEnabled: venue.aiEnabled,
+    websiteChatEnabled: venue.websiteChatEnabled,
+  });
+
+  const reset = await prisma.venueAgentConfig.upsert({
+    where: { venueId },
+    create: {
+      venueId,
+      enabled: defaults.enabled,
+      agentName: defaults.agentName,
+      brandVoice: defaults.brandVoice,
+      autonomyLevel: defaults.autonomyLevel,
+      canAnswerFaqs: defaults.actionPermissions.canAnswerFaqs,
+      canQualifyLeads: defaults.actionPermissions.canQualifyLeads,
+      canRecommendPackages: defaults.actionPermissions.canRecommendPackages,
+      canCreateQuotes: defaults.actionPermissions.canCreateQuotes,
+      canSendDepositLinks: defaults.actionPermissions.canSendDepositLinks,
+      canCreateReservations: defaults.actionPermissions.canCreateReservations,
+      confidenceThreshold: defaults.confidenceThreshold,
+      escalationRules: defaults.escalationRules,
+      followUpRules: defaults.followUpRules,
+      advancedInstructions: defaults.advancedInstructions,
+      enabledChannels: defaults.enabledChannels.includes("website_chat") ? "WEBSITE_CHAT" : "",
+    },
+    update: {
+      enabled: defaults.enabled,
+      agentName: defaults.agentName,
+      brandVoice: defaults.brandVoice,
+      autonomyLevel: defaults.autonomyLevel,
+      canAnswerFaqs: defaults.actionPermissions.canAnswerFaqs,
+      canQualifyLeads: defaults.actionPermissions.canQualifyLeads,
+      canRecommendPackages: defaults.actionPermissions.canRecommendPackages,
+      canCreateQuotes: defaults.actionPermissions.canCreateQuotes,
+      canSendDepositLinks: defaults.actionPermissions.canSendDepositLinks,
+      canCreateReservations: defaults.actionPermissions.canCreateReservations,
+      confidenceThreshold: defaults.confidenceThreshold,
+      escalationRules: defaults.escalationRules,
+      followUpRules: defaults.followUpRules,
+      advancedInstructions: defaults.advancedInstructions,
+      enabledChannels: defaults.enabledChannels.includes("website_chat") ? "WEBSITE_CHAT" : "",
+    },
+  });
+
+  await logOperatorActivity({
+    actorVenueUserId,
+    venueId,
+    entityType: "venue_agent_config",
+    entityId: reset.id,
+    action: "operator.agent_config_reset",
+    summary: `Reset AI agent settings for ${venue.name} to venue defaults.`,
+  });
+
+  revalidatePath("/operator/settings/agent");
+  revalidatePath("/operator/settings");
+
+  return reset;
 }
 
 export async function createOperatorVenueStaff(
@@ -1451,6 +1759,11 @@ export async function updateOperatorVenueSettings(
       websiteChatAllowedOrigins?: string;
       websiteChatWelcomeMessage?: string;
     websiteChatPromptPlaceholder?: string;
+      depositCheckoutMode: "MOCK" | "STRIPE_CONNECT";
+      stripeConnectAccountId: string;
+      stripeOnboardingComplete: boolean;
+      stripeChargesEnabled: boolean;
+      stripePayoutsEnabled: boolean;
   },
   actorVenueUserId?: string,
 ) {
@@ -1507,6 +1820,11 @@ export async function updateOperatorVenueSettings(
       ...(input.websiteChatPromptPlaceholder !== undefined
         ? { websiteChatPromptPlaceholder: input.websiteChatPromptPlaceholder || null }
         : {}),
+      depositCheckoutMode: input.depositCheckoutMode,
+      stripeConnectAccountId: input.stripeConnectAccountId || null,
+      stripeOnboardingComplete: input.stripeOnboardingComplete,
+      stripeChargesEnabled: input.stripeChargesEnabled,
+      stripePayoutsEnabled: input.stripePayoutsEnabled,
     },
   });
 
@@ -2029,5 +2347,74 @@ export async function listOperatorActivity(venueId: string): Promise<OperatorAct
     createdAt: formatRelative(item.createdAt),
     actorName: item.actorVenueUser?.fullName ?? item.actor?.fullName ?? "System",
     actorType: item.actorVenueUser ? "venue" : item.actor ? "platform" : "system",
+  }));
+}
+
+function describeWorkflowTask(task: {
+  type: string;
+  payload: unknown;
+  inquiry?: { guestName: string } | null;
+}) {
+  const payload = task.payload && typeof task.payload === "object" && !Array.isArray(task.payload)
+    ? task.payload as Record<string, unknown>
+    : {};
+  const guestName = task.inquiry?.guestName ?? (typeof payload.guestName === "string" ? payload.guestName : null);
+  const tableName = typeof payload.tableName === "string" ? payload.tableName : null;
+
+  if (task.type === "UNPAID_DEPOSIT_REMINDER") {
+    return [guestName ? `Deposit reminder for ${guestName}` : "Deposit reminder", tableName ? `table ${tableName}` : null]
+      .filter(Boolean)
+      .join(" · ");
+  }
+
+  if (task.type === "ABANDONED_CHAT_FOLLOW_UP") {
+    return guestName ? `Follow up with ${guestName}` : "Abandoned chat follow-up";
+  }
+
+  if (task.type === "STALE_QUOTE_EXPIRATION") {
+    return guestName ? `Review stale quote for ${guestName}` : "Stale quote review";
+  }
+
+  if (task.type === "POST_BOOKING_CONFIRMATION") {
+    return guestName ? `Post-booking confirmation for ${guestName}` : "Post-booking confirmation";
+  }
+
+  return guestName ? `Operator workflow alert for ${guestName}` : "Operator workflow alert";
+}
+
+export async function listOperatorWorkflowTasks(venueId: string): Promise<OperatorWorkflowTaskItem[]> {
+  const tasks = await prisma.workflowTask.findMany({
+    where: {
+      venueId,
+      status: {
+        in: ["PENDING", "PROCESSING", "FAILED", "COMPLETED"],
+      },
+    },
+    include: {
+      inquiry: {
+        select: {
+          id: true,
+          guestName: true,
+        },
+      },
+    },
+    orderBy: [
+      { status: "asc" },
+      { scheduledFor: "asc" },
+    ],
+    take: 25,
+  });
+
+  return tasks.map((task) => ({
+    id: task.id,
+    type: task.type,
+    status: task.status,
+    scheduledFor: formatDateTime(task.scheduledFor),
+    createdAt: formatRelative(task.createdAt),
+    attempts: task.attempts,
+    lastError: task.lastError,
+    inquiryId: task.inquiryId ?? undefined,
+    guestName: task.inquiry?.guestName,
+    description: describeWorkflowTask(task),
   }));
 }

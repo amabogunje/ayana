@@ -63,6 +63,11 @@ type OperatorSettingsProps = {
     websiteChatWelcomeMessage?: string | null;
     websiteChatPromptPlaceholder?: string | null;
     websiteChatInstallSnippet?: string | null;
+    depositCheckoutMode: "MOCK" | "STRIPE_CONNECT";
+    stripeConnectAccountId?: string | null;
+    stripeOnboardingComplete: boolean;
+    stripeChargesEnabled: boolean;
+    stripePayoutsEnabled: boolean;
     staffUsers: Array<{
       id: string;
       fullName: string;
@@ -1072,6 +1077,74 @@ export function OperatorSettingsForm({
                 <span>Deposit policy</span>
                 <textarea name="depositPolicy" rows={4} defaultValue={settings.depositPolicy} required />
               </label>
+
+              <div className="field field-span-full">
+                <span>Deposit checkout</span>
+                <div className="operator-dashboard-panel">
+                  <div className="form-row">
+                    <label className="field">
+                      <span>Checkout mode</span>
+                      <select
+                        name="depositCheckoutMode"
+                        className="select-input"
+                        defaultValue={settings.depositCheckoutMode}
+                      >
+                        <option value="MOCK">Mock checkout</option>
+                        <option value="STRIPE_CONNECT">Stripe Connect</option>
+                      </select>
+                    </label>
+                    <label className="field">
+                      <span>Connected account ID</span>
+                      <input
+                        name="stripeConnectAccountId"
+                        defaultValue={settings.stripeConnectAccountId ?? ""}
+                        placeholder="acct_1234..."
+                      />
+                    </label>
+                  </div>
+
+                  <div className="detail-list" style={{ marginTop: 12 }}>
+                    <label className="detail-row detail-row-audit">
+                      <div className="detail-row-copy">
+                        <strong>Onboarding complete</strong>
+                        <small>Mark this true once the venue has finished Stripe Express onboarding.</small>
+                      </div>
+                      <input
+                        type="checkbox"
+                        name="stripeOnboardingComplete"
+                        defaultChecked={settings.stripeOnboardingComplete}
+                      />
+                    </label>
+                    <label className="detail-row detail-row-audit">
+                      <div className="detail-row-copy">
+                        <strong>Charges enabled</strong>
+                        <small>Needed before live deposit links can charge the venue&apos;s Stripe account.</small>
+                      </div>
+                      <input
+                        type="checkbox"
+                        name="stripeChargesEnabled"
+                        defaultChecked={settings.stripeChargesEnabled}
+                      />
+                    </label>
+                    <label className="detail-row detail-row-audit">
+                      <div className="detail-row-copy">
+                        <strong>Payouts enabled</strong>
+                        <small>Useful for readiness tracking even in mock mode.</small>
+                      </div>
+                      <input
+                        type="checkbox"
+                        name="stripePayoutsEnabled"
+                        defaultChecked={settings.stripePayoutsEnabled}
+                      />
+                    </label>
+                  </div>
+
+                  <p className="form-helper" style={{ marginTop: 12 }}>
+                    Use <strong>Mock checkout</strong> to test the chat-to-deposit flow right now. Switch to
+                    <strong> Stripe Connect</strong> once the venue has a real connected account.
+                  </p>
+                </div>
+              </div>
 
               <label className="field field-span-full">
                 <span>Dress code summary</span>

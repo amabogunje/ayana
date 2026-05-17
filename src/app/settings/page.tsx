@@ -12,6 +12,8 @@ import {
   getResolvedStripeSecretKey,
   maskApiKey,
 } from "@/lib/platform-config";
+import { getLatestChatEvalReport } from "@/lib/chat-evals/report";
+import Link from "next/link";
 
 export default async function SettingsPage({
   searchParams,
@@ -35,6 +37,7 @@ export default async function SettingsPage({
   const isEnvFallback = !platformConfig.openAIApiKey && Boolean(process.env.OPENAI_API_KEY);
   const configuredStripeKey = getResolvedStripeSecretKey(platformConfig.stripeSecretKey);
   const isStripeEnvFallback = !platformConfig.stripeSecretKey && Boolean(process.env.STRIPE_SECRET_KEY);
+  const chatEvalReport = await getLatestChatEvalReport();
 
   return (
     <main className="admin-page">
@@ -192,6 +195,40 @@ export default async function SettingsPage({
               Only platform owners can update the Stripe secret key.
             </p>
           )}
+        </article>
+
+        <article className="panel">
+          <div className="panel-header">
+            <div>
+              <span className="panel-label">System QA</span>
+              <h2>Website chat evals</h2>
+            </div>
+          </div>
+
+          <div className="detail-list" style={{ marginTop: 0 }}>
+            <div className="detail-row">
+              <div className="detail-row-copy">
+                <strong>Latest report</strong>
+                <small>
+                  {chatEvalReport
+                    ? `${chatEvalReport.passCount}/${chatEvalReport.scenarioCount} passing with an average score of ${chatEvalReport.averageScore}`
+                    : "No report generated yet"}
+                </small>
+              </div>
+              <span className={`status-chip ${chatEvalReport ? "success" : "warning"}`}>
+                {chatEvalReport ? "Available" : "Missing"}
+              </span>
+            </div>
+          </div>
+
+          <div className="action-row">
+            <Link href="/system/evals" className="button button-secondary action-button">
+              Open system evals
+            </Link>
+            <Link href="/system/agent-runs" className="button button-secondary action-button">
+              Inspect agent runs
+            </Link>
+          </div>
         </article>
 
         <article className="panel">

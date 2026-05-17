@@ -18,7 +18,7 @@ import { getOperatorInquiry, listOperatorInbox } from "@/lib/operator-service";
 import type { OperatorInboxItem, OperatorInquiryDetail } from "@/lib/operator-types";
 
 type BoardTone = "attention" | "confirmed" | "tonight" | "upcoming" | "neutral";
-type InboxFilter = "all" | "attention" | "deposits" | "confirmed";
+type InboxFilter = "all" | "attention" | "responded" | "won" | "lost";
 type InboxContext = "tonight" | "next7" | "all";
 
 const contextOptions: Array<{
@@ -106,6 +106,14 @@ function isDepositPending(item: OperatorInboxItem) {
   return item.reservationStatus === "DEPOSIT_PENDING" || item.status === "DEPOSIT_SENT";
 }
 
+function isResponded(item: OperatorInboxItem) {
+  return item.status === "QUALIFYING" || item.status === "QUOTED" || item.status === "DEPOSIT_SENT";
+}
+
+function isLost(item: OperatorInboxItem) {
+  return item.status === "LOST";
+}
+
 function isTonight(item: OperatorInboxItem) {
   const label = item.requestedDateLabel.toLowerCase();
   return label.includes("tonight") || label.includes("apr 25") || label.includes("april 25");
@@ -146,6 +154,7 @@ function itemTone(item: OperatorInboxItem): BoardTone {
 function actionText(item: OperatorInboxItem) {
   if (item.isHumanTakeover) return "Reply";
   if (isDepositPending(item)) return "Send deposit";
+  if (isLost(item)) return "Review";
   return "View";
 }
 
@@ -156,6 +165,7 @@ function statusText(item: OperatorInboxItem) {
   if (item.status === "NEW") return "New inquiry";
   if (item.status === "QUALIFYING") return "Qualifying";
   if (item.status === "QUOTED") return "Quoted";
+  if (item.status === "LOST") return "Disqualified";
   return "Open";
 }
 
@@ -208,8 +218,29 @@ function buildInboxHref(input: {
 function itemMatchesFilter(item: OperatorInboxItem, filter: InboxFilter) {
   if (filter === "all") return true;
   if (filter === "attention") return isAttention(item);
-  if (filter === "deposits") return isDepositPending(item);
+  if (filter === "responded") return isResponded(item);
+  if (filter === "lost") return isLost(item);
   return isConfirmed(item);
+}
+
+function getNextLeadAction(item: OperatorInboxItem) {
+  if (item.status === "NEW" || item.status === "NEEDS_HUMAN") {
+    return { status: "QUALIFYING" as const, label: "Mark responded" };
+  }
+
+  if (item.status === "QUALIFYING") {
+    return { status: "QUOTED" as const, label: "Mark quoted" };
+  }
+
+  if (item.status === "QUOTED") {
+    return { status: "DEPOSIT_SENT" as const, label: "Request deposit" };
+  }
+
+  if (item.status === "DEPOSIT_SENT") {
+    return { status: "CONFIRMED" as const, label: "Mark won" };
+  }
+
+  return null;
 }
 
 function itemMatchesSearch(item: OperatorInboxItem, detail: OperatorInquiryDetail | undefined, query: string) {
@@ -332,9 +363,13 @@ export default async function OperatorInboxPage({
   const context: InboxContext = params.context === "next7" || params.context === "all" ? params.context : "tonight";
   const activeContext = contextOptions.find((option) => option.value === context) ?? contextOptions[0];
   const filter: InboxFilter =
-    params.filter === "attention" || params.filter === "deposits" || params.filter === "confirmed"
+    params.filter === "attention" ||
+    params.filter === "responded" ||
+    params.filter === "won" ||
+    params.filter === "lost"
       ? params.filter
       : "all";
+  const usingLeadStageFilter = filter === "responded" || filter === "won" || filter === "lost";
   const hide = String(params.hide ?? "").split(",").filter(Boolean);
   const allInquiries = [...(await listOperatorInbox(user.venueId))].sort((a, b) => priority(a) - priority(b));
   const detailItems = await Promise.all(allInquiries.map((item) => getOperatorInquiry(user.venueId, item.id)));
@@ -356,6 +391,8 @@ export default async function OperatorInboxPage({
   const isSecured = selectedItem ? isConfirmed(selectedItem) || (requiredCents > 0 && dueCents === 0) : false;
 
   const allAttention = contextInquiries.filter(isAttention);
+  const allResponded = contextInquiries.filter(isResponded);
+  const allLost = contextInquiries.filter(isLost);
   const allPending = contextInquiries.filter(isDepositPending);
   const allConfirmed = contextInquiries.filter(isConfirmed);
   const attention =
@@ -367,6 +404,9 @@ export default async function OperatorInboxPage({
         .filter((item) => filter === "all" || itemMatchesFilter(item, filter));
   const attentionIds = new Set(attention.map((item) => item.id));
   const remaining = visibleInquiries.filter((item) => !attentionIds.has(item.id));
+  const responded = remaining.filter(isResponded);
+  const lost = remaining.filter(isLost);
+  const won = remaining.filter(isConfirmed);
   const tonight = context === "tonight" ? remaining.filter(isTonight) : [];
   const tonightConfirmed = tonight.filter(isConfirmed);
   const tonightPending = tonight.filter((item) => !isConfirmed(item));
@@ -416,18 +456,18 @@ export default async function OperatorInboxPage({
           <em>Act now</em>
         </div>
         <div className="metric-deposits">
-          <strong>{allPending.length}</strong>
-          <small>Deposits pending</small>
+          <strong>{allResponded.length}</strong>
+          <small>Responded</small>
           <em>{formatCurrency(depositAtRisk)} at risk</em>
         </div>
         <div className="metric-confirmed">
           <strong>{allConfirmed.length}</strong>
-          <small>Confirmed</small>
+          <small>Won business</small>
           <em>{formatCurrency(securedDeposits)} secured</em>
         </div>
         <div className="metric-total">
-          <strong>{contextInquiries.length}</strong>
-          <small>Total inquiries</small>
+          <strong>{allLost.length}</strong>
+          <small>Disqualified</small>
           <em>{activeContext.label}</em>
         </div>
       </section>
@@ -446,8 +486,9 @@ export default async function OperatorInboxPage({
         <div>
           <Link className={filter === "all" ? "active" : ""} href={buildInboxHref({ q: query, context })}>All</Link>
           <Link className={filter === "attention" ? "active" : ""} href={buildInboxHref({ q: query, filter: "attention", context })}>Needs attention</Link>
-          <Link className={filter === "deposits" ? "active" : ""} href={buildInboxHref({ q: query, filter: "deposits", context })}>Deposits</Link>
-          <Link className={filter === "confirmed" ? "active" : ""} href={buildInboxHref({ q: query, filter: "confirmed", context })}>Confirmed</Link>
+          <Link className={filter === "responded" ? "active" : ""} href={buildInboxHref({ q: query, filter: "responded", context })}>Responded</Link>
+          <Link className={filter === "won" ? "active" : ""} href={buildInboxHref({ q: query, filter: "won", context })}>Won</Link>
+          <Link className={filter === "lost" ? "active" : ""} href={buildInboxHref({ q: query, filter: "lost", context })}>Disqualified</Link>
         </div>
       </section>
 
@@ -469,7 +510,53 @@ export default async function OperatorInboxPage({
               context={context}
               hide={hide}
             />
-            {context === "tonight" ? (
+            {usingLeadStageFilter ? (
+              <>
+                <BoardSection
+                  title="Responded leads"
+                  subtitle={`${responded.length} leads currently in progress.`}
+                  tone="upcoming"
+                  items={responded}
+                  details={details}
+                  hidden={hide.includes("responded")}
+                  toggleHref={toggleHide("responded")}
+                  query={query}
+                  filter={filter}
+                  context={context}
+                  hide={hide}
+                  showActualDate
+                />
+                <BoardSection
+                  title="Won business"
+                  subtitle={`${won.length} leads converted into bookings.`}
+                  tone="confirmed"
+                  items={won}
+                  details={details}
+                  hidden={hide.includes("won")}
+                  toggleHref={toggleHide("won")}
+                  query={query}
+                  filter={filter}
+                  context={context}
+                  hide={hide}
+                  showActualDate
+                />
+                <BoardSection
+                  title="Disqualified leads"
+                  subtitle={`${lost.length} leads marked as not moving forward.`}
+                  tone="neutral"
+                  items={lost}
+                  details={details}
+                  hidden={hide.includes("lost")}
+                  toggleHref={toggleHide("lost")}
+                  query={query}
+                  filter={filter}
+                  context={context}
+                  hide={hide}
+                  showActualDate
+                />
+              </>
+            ) : null}
+            {!usingLeadStageFilter && context === "tonight" ? (
               <>
                 <BoardSection
                   title="Confirmed tonight"
@@ -499,7 +586,7 @@ export default async function OperatorInboxPage({
                 />
               </>
             ) : null}
-            {context === "next7"
+            {!usingLeadStageFilter && context === "next7"
               ? groupedByDate.map(([date, items]) => (
                 <BoardSection
                   key={date}
@@ -518,7 +605,7 @@ export default async function OperatorInboxPage({
                 />
               ))
               : null}
-            {context === "all" ? (
+            {!usingLeadStageFilter && context === "all" ? (
               <BoardSection
                 title="All active inquiries"
                 subtitle="Full inbox view with lower urgency styling."
@@ -574,6 +661,16 @@ export default async function OperatorInboxPage({
             </div>
 
             <div className="operator-drawer-actions">
+              {getNextLeadAction(selectedItem) ? (
+                <form action={updateOperatorInquiryStatusAction}>
+                  <input type="hidden" name="inquiryId" value={selected.id} />
+                  <input type="hidden" name="status" value={getNextLeadAction(selectedItem)?.status} />
+                  <input type="hidden" name="redirectTo" value={buildInboxHref({ lead: selected.id, q: query, filter, context, hide })} />
+                  <button type="submit" className="operator-secondary-action">
+                    {getNextLeadAction(selectedItem)?.label}
+                  </button>
+                </form>
+              ) : null}
               {isDepositPending(selectedItem) ? (
                 <form action={updateOperatorInquiryStatusAction}>
                   <input type="hidden" name="inquiryId" value={selected.id} />
@@ -590,6 +687,16 @@ export default async function OperatorInboxPage({
                   {actionText(selectedItem)}
                 </Link>
               )}
+              {!isLost(selectedItem) && !isConfirmed(selectedItem) ? (
+                <form action={updateOperatorInquiryStatusAction}>
+                  <input type="hidden" name="inquiryId" value={selected.id} />
+                  <input type="hidden" name="status" value="LOST" />
+                  <input type="hidden" name="redirectTo" value={buildInboxHref({ lead: selected.id, q: query, filter, context, hide })} />
+                  <button type="submit" className="operator-secondary-action">
+                    Disqualify
+                  </button>
+                </form>
+              ) : null}
               {selected.phone ? (
                 <a href={`tel:${selected.phone}`} className="operator-secondary-action">
                   <Phone size={17} aria-hidden="true" />

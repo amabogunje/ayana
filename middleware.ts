@@ -8,6 +8,8 @@ const PUBLIC_PATHS = [
   "/api/auth/login",
   "/api/operator/auth/login",
   "/api/public",
+  "/api/test",
+  "/api/workflows",
   "/api/widget.js",
   "/widget",
 ];

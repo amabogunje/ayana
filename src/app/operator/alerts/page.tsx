@@ -1,10 +1,13 @@
 import Link from "next/link";
 import { requireOperatorUser } from "@/lib/operator-auth";
-import { listOperatorAlerts } from "@/lib/operator-service";
+import { listOperatorAlerts, listOperatorWorkflowTasks } from "@/lib/operator-service";
 
 export default async function OperatorAlertsPage() {
   const user = await requireOperatorUser();
-  const alerts = await listOperatorAlerts(user.venueId);
+  const [alerts, workflowTasks] = await Promise.all([
+    listOperatorAlerts(user.venueId),
+    listOperatorWorkflowTasks(user.venueId),
+  ]);
 
   return (
     <main className="admin-page">
@@ -46,6 +49,58 @@ export default async function OperatorAlertsPage() {
                   </div>
                   {alert.inquiryId ? (
                     <Link href={`/operator/inbox/${alert.inquiryId}`} className="button button-secondary">
+                      Open thread
+                    </Link>
+                  ) : (
+                    <span className="muted-inline">Venue-level</span>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </article>
+
+        <article className="panel">
+          <div className="panel-header">
+            <div>
+              <span className="panel-label">Workflow tasks</span>
+              <h2>Follow-up queue</h2>
+            </div>
+          </div>
+
+          <div className="detail-list">
+            {workflowTasks.length === 0 ? (
+              <div className="detail-row">
+                <span>No workflow tasks</span>
+                <strong>System</strong>
+              </div>
+            ) : (
+              workflowTasks.map((task) => (
+                <div key={task.id} className="detail-row detail-row-alert">
+                  <div className="detail-row-copy">
+                    <div className="thread-meta">
+                      <span
+                        className={`status-chip ${
+                          task.status === "FAILED"
+                            ? "danger"
+                            : task.status === "PENDING" || task.status === "PROCESSING"
+                              ? "warning"
+                              : "neutral"
+                        }`}
+                      >
+                        {task.status}
+                      </span>
+                      <span>{task.scheduledFor}</span>
+                      <span>{task.type}</span>
+                    </div>
+                    <strong>{task.description}</strong>
+                    <small>
+                      Attempts: {task.attempts}
+                      {task.lastError ? ` · ${task.lastError}` : ""}
+                    </small>
+                  </div>
+                  {task.inquiryId ? (
+                    <Link href={`/operator/inbox/${task.inquiryId}`} className="button button-secondary">
                       Open thread
                     </Link>
                   ) : (

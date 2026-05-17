@@ -39,4 +39,9 @@ export const operatorVenueSettingsSchema = z.object({
   websiteChatAllowedOrigins: z.string().optional(),
   websiteChatWelcomeMessage: z.string().optional(),
   websiteChatPromptPlaceholder: z.string().optional(),
+  depositCheckoutMode: z.enum(["MOCK", "STRIPE_CONNECT"]).optional().default("MOCK"),
+  stripeConnectAccountId: z.string().optional().default(""),
+  stripeOnboardingComplete: z.boolean().optional().default(false),
+  stripeChargesEnabled: z.boolean().optional().default(false),
+  stripePayoutsEnabled: z.boolean().optional().default(false),
 });

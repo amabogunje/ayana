@@ -1,13 +1,13 @@
 "use client";
 
-import { FormEvent, useEffect, useId, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useId, useState } from "react";
 import { ArrowRight, Check, X } from "lucide-react";
 
 const roleOptions = [
   { value: "owner", label: "Owner" },
   { value: "manager", label: "Manager" },
   { value: "promoter", label: "Promoter" },
-  { value: "staff", label: "Staff" },
+  { value: "other", label: "Other" },
 ];
 
 type SubmissionState = "idle" | "submitting" | "success" | "error";
@@ -17,6 +17,7 @@ export function PilotLeadDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const [submissionState, setSubmissionState] = useState<SubmissionState>("idle");
   const [errorMessage, setErrorMessage] = useState("");
+  const [phone, setPhone] = useState("");
 
   useEffect(() => {
     if (!isOpen) return;
@@ -40,6 +41,32 @@ export function PilotLeadDialog() {
     setIsOpen(true);
     setSubmissionState("idle");
     setErrorMessage("");
+    setPhone("");
+  }
+
+  function formatPhoneNumber(value: string) {
+    const digits = value.replace(/\D/g, "").slice(0, 10);
+    const areaCode = digits.slice(0, 3);
+    const prefix = digits.slice(3, 6);
+    const lineNumber = digits.slice(6, 10);
+
+    if (digits.length > 6) {
+      return `(${areaCode}) ${prefix}-${lineNumber}`;
+    }
+
+    if (digits.length > 3) {
+      return `(${areaCode}) ${prefix}`;
+    }
+
+    if (digits.length > 0) {
+      return `(${areaCode}`;
+    }
+
+    return "";
+  }
+
+  function handlePhoneChange(event: ChangeEvent<HTMLInputElement>) {
+    setPhone(formatPhoneNumber(event.target.value));
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -56,6 +83,7 @@ export function PilotLeadDialog() {
         body: JSON.stringify({
           fullName: formData.get("fullName"),
           email: formData.get("email"),
+          phone: formData.get("phone"),
           venueName: formData.get("venueName"),
           role: formData.get("role"),
         }),
@@ -104,24 +132,37 @@ export function PilotLeadDialog() {
             ) : (
               <form className="lead-dialog-form" onSubmit={handleSubmit}>
                 <label>
-                  <span>Full name</span>
+                  <span>Full name <strong>*</strong></span>
                   <input name="fullName" type="text" autoComplete="name" required minLength={2} />
                 </label>
 
                 <label>
-                  <span>Email</span>
+                  <span>Email <strong>*</strong></span>
                   <input name="email" type="email" autoComplete="email" required />
                 </label>
 
                 <label>
+                  <span>Phone number <em>optional</em></span>
+                  <input
+                    name="phone"
+                    type="tel"
+                    autoComplete="tel"
+                    inputMode="tel"
+                    placeholder="(555) 123-4567"
+                    value={phone}
+                    onChange={handlePhoneChange}
+                  />
+                </label>
+
+                <label>
                   <span>Company or venue name</span>
-                  <input name="venueName" type="text" autoComplete="organization" required minLength={2} />
+                  <input name="venueName" type="text" autoComplete="organization" />
                 </label>
 
                 <label>
                   <span>Role</span>
-                  <select name="role" defaultValue="" required>
-                    <option value="" disabled>
+                  <select name="role" defaultValue="">
+                    <option value="">
                       Select your role
                     </option>
                     {roleOptions.map((option) => (

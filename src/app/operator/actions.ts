@@ -12,13 +12,16 @@ import {
   createOperatorReservation,
   createOperatorStaffReservation,
   generateOperatorWebsiteChatSnippet,
+  resetOperatorVenueAgentConfig,
   uploadOperatorVenueAsset,
   updateOperatorEventOverride,
   updateOperatorEventSeries,
   updateOperatorInquiryStatus,
   updateOperatorReservation,
+  updateOperatorVenueAgentConfig,
   updateOperatorVenueSettings,
 } from "@/lib/operator-service";
+import { hasOperatorPermission } from "@/lib/operator-permissions";
 import { hasUploadedFile } from "@/lib/venue-assets";
 
 function messageParam(error: unknown) {
@@ -103,6 +106,11 @@ export async function updateOperatorVenueSettingsAction(formData: FormData) {
         hasValet: formData.get("hasValet") === "on",
         dressCodeSummary: String(formData.get("dressCodeSummary") ?? "").trim(),
         agePolicySummary: String(formData.get("agePolicySummary") ?? "").trim(),
+        depositCheckoutMode: String(formData.get("depositCheckoutMode") ?? "MOCK").trim() as "MOCK" | "STRIPE_CONNECT",
+        stripeConnectAccountId: String(formData.get("stripeConnectAccountId") ?? "").trim(),
+        stripeOnboardingComplete: formData.get("stripeOnboardingComplete") === "on",
+        stripeChargesEnabled: formData.get("stripeChargesEnabled") === "on",
+        stripePayoutsEnabled: formData.get("stripePayoutsEnabled") === "on",
       },
       user.id,
     );
@@ -150,6 +158,67 @@ export async function updateOperatorVenueSettingsAction(formData: FormData) {
   } catch (error) {
     rethrowIfRedirectError(error);
     redirect(`/operator/settings?error=${messageParam(error)}`);
+  }
+}
+
+export async function updateOperatorVenueAgentConfigAction(formData: FormData) {
+  const user = await requireOperatorUser();
+
+  if (!hasOperatorPermission(user.role, "ai:control")) {
+    redirect("/operator/settings/agent?error=You%20do%20not%20have%20permission%20to%20manage%20AI%20agent%20settings.");
+  }
+
+  const autonomyLevel = Number.parseInt(String(formData.get("autonomyLevel") ?? "0"), 10);
+  const confidenceThreshold = Number.parseFloat(String(formData.get("confidenceThreshold") ?? "0.5"));
+  const partySizeValue = String(formData.get("partySizeThreshold") ?? "").trim();
+  const partySizeThreshold = partySizeValue ? Number.parseInt(partySizeValue, 10) : null;
+
+  try {
+    await updateOperatorVenueAgentConfig(
+      user.venueId,
+      {
+        enabled: formData.get("enabled") === "on",
+        agentName: String(formData.get("agentName") ?? "").trim(),
+        brandVoice: String(formData.get("brandVoice") ?? "").trim(),
+        autonomyLevel: Number.isFinite(autonomyLevel) ? autonomyLevel : 0,
+        canAnswerFaqs: formData.get("canAnswerFaqs") === "on",
+        canQualifyLeads: formData.get("canQualifyLeads") === "on",
+        canRecommendPackages: formData.get("canRecommendPackages") === "on",
+        canCreateQuotes: formData.get("canCreateQuotes") === "on",
+        canSendDepositLinks: formData.get("canSendDepositLinks") === "on",
+        canCreateReservations: formData.get("canCreateReservations") === "on",
+        confidenceThreshold: Number.isFinite(confidenceThreshold) ? confidenceThreshold : Number.NaN,
+        escalateOnLowConfidence: formData.get("escalateOnLowConfidence") === "on",
+        escalateForVipRequests: formData.get("escalateForVipRequests") === "on",
+        escalateForUnavailableInventory: formData.get("escalateForUnavailableInventory") === "on",
+        escalateForOversizedParty: formData.get("escalateForOversizedParty") === "on",
+        partySizeThreshold,
+        websiteChatEnabled: formData.get("websiteChatEnabled") === "on",
+        advancedInstructions: String(formData.get("advancedInstructions") ?? "").trim(),
+      },
+      user.id,
+    );
+
+    redirect("/operator/settings/agent?saved=1");
+  } catch (error) {
+    rethrowIfRedirectError(error);
+    redirect(`/operator/settings/agent?error=${messageParam(error)}`);
+  }
+}
+
+export async function resetOperatorVenueAgentConfigAction() {
+  const user = await requireOperatorUser();
+
+  if (!hasOperatorPermission(user.role, "ai:control")) {
+    redirect("/operator/settings/agent?error=You%20do%20not%20have%20permission%20to%20manage%20AI%20agent%20settings.");
+  }
+
+  try {
+    await resetOperatorVenueAgentConfig(user.venueId, user.id);
+    redirect("/operator/settings/agent?saved=reset");
+  } catch (error) {
+    rethrowIfRedirectError(error);
+    redirect(`/operator/settings/agent?error=${messageParam(error)}`);
   }
 }
 

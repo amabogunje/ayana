@@ -5,6 +5,10 @@ export async function resetDatabase() {
   await prisma.venueAsset.deleteMany();
   await prisma.eventOccurrenceOverride.deleteMany();
   await prisma.eventSeries.deleteMany();
+  await prisma.workflowTask.deleteMany();
+  await prisma.agentToolCall.deleteMany();
+  await prisma.agentRun.deleteMany();
+  await prisma.venueAgentConfig.deleteMany();
   await prisma.activityLog.deleteMany();
   await prisma.alert.deleteMany();
   await prisma.quoteOption.deleteMany();
@@ -19,6 +23,33 @@ export async function resetDatabase() {
   await prisma.platformUser.deleteMany();
   await prisma.platformConfig.deleteMany();
   await prisma.venue.deleteMany();
+}
+
+export async function deleteVenueData(venueId: string) {
+  const inquiries = await prisma.inquiry.findMany({
+    where: { venueId },
+    select: { id: true },
+  });
+  const inquiryIds = inquiries.map((inquiry) => inquiry.id);
+
+  await prisma.venueAsset.deleteMany({ where: { venueId } });
+  await prisma.eventOccurrenceOverride.deleteMany({ where: { venueId } });
+  await prisma.eventSeries.deleteMany({ where: { venueId } });
+  await prisma.workflowTask.deleteMany({ where: { venueId } });
+  await prisma.agentToolCall.deleteMany({ where: { venueId } });
+  await prisma.agentRun.deleteMany({ where: { venueId } });
+  await prisma.venueAgentConfig.deleteMany({ where: { venueId } });
+  await prisma.alert.deleteMany({ where: { venueId } });
+  await prisma.activityLog.deleteMany({ where: { venueId } });
+  await prisma.quoteOption.deleteMany({ where: { inquiryId: { in: inquiryIds } } });
+  await prisma.reservation.deleteMany({ where: { inquiryId: { in: inquiryIds } } });
+  await prisma.websiteChatSession.deleteMany({ where: { venueId } });
+  await prisma.inquiryMessage.deleteMany({ where: { inquiryId: { in: inquiryIds } } });
+  await prisma.inquiry.deleteMany({ where: { venueId } });
+  await prisma.venueSession.deleteMany({ where: { user: { venueId } } });
+  await prisma.venueUser.deleteMany({ where: { venueId } });
+  await prisma.tableOption.deleteMany({ where: { venueId } });
+  await prisma.venue.deleteMany({ where: { id: venueId } });
 }
 
 export async function createVenue(overrides: Partial<Parameters<typeof prisma.venue.create>[0]["data"]> = {}) {
@@ -41,19 +72,25 @@ export async function createVenue(overrides: Partial<Parameters<typeof prisma.ve
   });
 }
 
-export async function createTableOption(venueId: string) {
+export async function createTableOption(
+  venueId: string,
+  overrides: Partial<Prisma.TableOptionUncheckedCreateInput> = {},
+) {
+  const data: Prisma.TableOptionUncheckedCreateInput = {
+    venueId,
+    name: "Dance Floor Table",
+    code: "DFT",
+    quantity: 2,
+    minSpendCents: 100_000,
+    depositAmountCents: 20_000,
+    capacityMin: 2,
+    capacityMax: 8,
+    description: "Prime room placement.",
+    ...overrides,
+  };
+
   return prisma.tableOption.create({
-    data: {
-      venueId,
-      name: "Dance Floor Table",
-      code: "DFT",
-      quantity: 2,
-      minSpendCents: 100_000,
-      depositAmountCents: 20_000,
-      capacityMin: 2,
-      capacityMax: 8,
-      description: "Prime room placement.",
-    },
+    data,
   });
 }
 

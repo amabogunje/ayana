@@ -25,6 +25,10 @@ type SessionRecord = {
   user: PlatformUserRecord;
 };
 
+declare global {
+  var ensurePlatformUsersSeededPromise: Promise<void> | undefined;
+}
+
 type AuthRepository = {
   platformUser: {
     count: () => Promise<number>;
@@ -60,30 +64,45 @@ function passwordsMatch(password: string, passwordHash: string) {
 }
 
 export async function ensurePlatformUsersSeeded() {
-  const seedUsers = [
-    {
-      email: "owner@getayana.com",
-      fullName: "Platform Owner",
-      role: "PLATFORM_OWNER" as const,
-    },
-    {
-      email: "ops@getayana.com",
-      fullName: "Operations Admin",
-      role: "PLATFORM_OWNER" as const,
-    },
-  ];
+  if (!global.ensurePlatformUsersSeededPromise) {
+    global.ensurePlatformUsersSeededPromise = (async () => {
+      const seedUsers = [
+        {
+          email: "owner@getayana.com",
+          fullName: "Platform Owner",
+          role: "PLATFORM_OWNER" as const,
+        },
+        {
+          email: "ops@getayana.com",
+          fullName: "Operations Admin",
+          role: "PLATFORM_OWNER" as const,
+        },
+      ];
 
-  for (const user of seedUsers) {
-    await prisma.platformUser.upsert({
-      where: { email: user.email },
-      update: {},
-      create: {
-        ...user,
-        passwordHash: hashPassword(DEFAULT_PASSWORD),
-        isActive: true,
-      },
+      for (const user of seedUsers) {
+        try {
+          await prisma.platformUser.upsert({
+            where: { email: user.email },
+            update: {},
+            create: {
+              ...user,
+              passwordHash: hashPassword(DEFAULT_PASSWORD),
+              isActive: true,
+            },
+          });
+        } catch (error) {
+          const known = error as { code?: string } | null;
+          if (known?.code !== "P2002") {
+            throw error;
+          }
+        }
+      }
+    })().finally(() => {
+      global.ensurePlatformUsersSeededPromise = undefined;
     });
   }
+
+  await global.ensurePlatformUsersSeededPromise;
 }
 
 export async function listPlatformUsers() {

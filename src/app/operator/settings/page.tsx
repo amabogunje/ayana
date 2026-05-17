@@ -3,6 +3,7 @@ import { requireOperatorUser } from "@/lib/operator-auth";
 import { hasOperatorPermission } from "@/lib/operator-permissions";
 import { getOperatorVenueSettings } from "@/lib/operator-service";
 import { CheckCircle2 } from "lucide-react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 export default async function OperatorSettingsPage({
@@ -28,9 +29,16 @@ export default async function OperatorSettingsPage({
           <h1>Settings</h1>
           <p>Manage venue details, guest-facing policies, menus, and channel setup.</p>
         </div>
-        <div className="operator-settings-save-chip">
-          <CheckCircle2 size={18} aria-hidden="true" />
-          <span>All changes saved</span>
+        <div className="operator-agent-header-actions">
+          {hasOperatorPermission(user.role, "ai:control") ? (
+            <Link href="/operator/settings/agent" className="operator-secondary-action">
+              AI agent settings
+            </Link>
+          ) : null}
+          <div className="operator-settings-save-chip">
+            <CheckCircle2 size={18} aria-hidden="true" />
+            <span>All changes saved</span>
+          </div>
         </div>
       </section>
 

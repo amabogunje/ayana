@@ -174,8 +174,56 @@ export type OperatorVenueSettings = {
   websiteChatWelcomeMessage?: string | null;
   websiteChatPromptPlaceholder?: string | null;
   websiteChatInstallSnippet?: string | null;
+  depositCheckoutMode: "MOCK" | "STRIPE_CONNECT";
+  stripeConnectAccountId?: string | null;
+  stripeOnboardingComplete: boolean;
+  stripeChargesEnabled: boolean;
+  stripePayoutsEnabled: boolean;
   staffUsers: OperatorVenueUserOption[];
   assets: OperatorVenueAsset[];
+};
+
+export type OperatorVenueAgentSettings = {
+  venue: {
+    id: string;
+    name: string;
+    brandTone: string;
+    aiEnabled: boolean;
+    websiteChatEnabled: boolean;
+    websiteChatWidgetKey?: string | null;
+  };
+  config: {
+    id?: string;
+    source?: string;
+    enabled: boolean;
+    agentName: string;
+    brandVoice: string;
+    autonomyLevel: 0 | 1 | 2 | 3 | 4 | 5;
+    confidenceThreshold: number;
+    enabledChannels: string[];
+    actionPermissions: {
+      canAnswerFaqs: boolean;
+      canQualifyLeads: boolean;
+      canRecommendPackages: boolean;
+      canCreateQuotes: boolean;
+      canSendDepositLinks: boolean;
+      canCreateReservations: boolean;
+    };
+    escalationRules: {
+      escalateOnLowConfidence: boolean;
+      lowConfidenceThreshold: number;
+      escalateForVipRequests: boolean;
+      escalateForUnavailableInventory: boolean;
+      escalateForOversizedParty: boolean;
+      partySizeThreshold?: number | null;
+    };
+    followUpRules: {
+      enabled: boolean;
+      unpaidDepositReminderHours?: number | null;
+      abandonedChatReminderHours?: number | null;
+    };
+    advancedInstructions?: string | null;
+  };
 };
 
 export type OperatorVenueAsset = {
@@ -231,6 +279,19 @@ export type OperatorActivityItem = {
   createdAt: string;
   actorName: string;
   actorType: "platform" | "venue" | "system";
+};
+
+export type OperatorWorkflowTaskItem = {
+  id: string;
+  type: string;
+  status: string;
+  scheduledFor: string;
+  createdAt: string;
+  attempts: number;
+  lastError?: string | null;
+  inquiryId?: string;
+  guestName?: string;
+  description: string;
 };
 
 export type OperatorOverviewMetric = {

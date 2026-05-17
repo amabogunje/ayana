@@ -59,6 +59,11 @@ export async function POST(request: NextRequest) {
         hasValet: formData.get("hasValet") === "on",
         dressCodeSummary: String(formData.get("dressCodeSummary") ?? "").trim(),
         agePolicySummary: String(formData.get("agePolicySummary") ?? "").trim(),
+        depositCheckoutMode: String(formData.get("depositCheckoutMode") ?? "MOCK").trim(),
+        stripeConnectAccountId: String(formData.get("stripeConnectAccountId") ?? "").trim(),
+        stripeOnboardingComplete: formData.get("stripeOnboardingComplete") === "on",
+        stripeChargesEnabled: formData.get("stripeChargesEnabled") === "on",
+        stripePayoutsEnabled: formData.get("stripePayoutsEnabled") === "on",
       });
 
       await updateOperatorVenueSettings(user.venueId, input, user.id);

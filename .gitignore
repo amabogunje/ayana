@@ -10,6 +10,7 @@ prisma/test.db
 prisma/test.db-journal
 prisma/write-test.txt
 coverage/
+reports/
 test-results/
 playwright-report/
 /*.png

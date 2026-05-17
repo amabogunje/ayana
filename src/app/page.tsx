@@ -7,29 +7,29 @@ import { ScrollAnchorLink } from "@/components/scroll-anchor-link";
 const steps = [
   {
     icon: PhoneCall,
-    title: "Customers reach out",
-    description: "Calls, texts, and messages come in throughout the day and night",
+    title: "Customers message anytime",
+    description: "Calls, texts, and DMs come in before, during, and after service",
   },
   {
     icon: MessageSquareText,
-    title: "Ayana responds instantly",
-    description: "Every inquiry gets an immediate reply - even when your team is unavailable",
+    title: "Ayana qualifies them",
+    description: "Every inquiry gets an instant reply and the right booking questions",
   },
   {
     icon: CircleDollarSign,
-    title: "Options are provided",
-    description: "Customers are shown available tables and can confirm with a deposit",
+    title: "Deposit links are sent",
+    description: "Ayana shares pricing, available options, and a deposit link",
   },
   {
     icon: CalendarCheck,
-    title: "Bookings are confirmed",
-    description: "Reservations are logged and shared with your team automatically",
+    title: "Bookings confirm automatically",
+    description: "Paid reservations are confirmed and shared with your team",
   },
 ];
 
 const changes = [
   "More confirmed bookings",
-  "Increase table utilization",
+  "Fill empty tables that go unsold",
   "Reduce last-minute vacancy",
 ];
 
@@ -77,13 +77,11 @@ export default function LandingPage() {
       <section className="landing-hero">
         <div className="landing-container landing-hero-grid">
           <div className="landing-hero-copy">
-            <h1>Turn every customer inquiry into a booking</h1>
-            <p className="landing-hero-support">
-              Most venues already get demand, they just don&apos;t respond fast enough to capture it.
-            </p>
+            <h1>Turn missed messages into bookings</h1>
             <p>
-              Ayana handles every call, text, and DM instantly, so you never lose a customer due to
-              slow response or unavailability.
+              Customers message you before you open. If you don&apos;t respond instantly, they book
+              somewhere else. Ayana replies in seconds, secures deposits, and confirms bookings for
+              you.
             </p>
             <div className="landing-actions">
               <ScrollAnchorLink targetId="pilot" className="landing-button landing-button-primary">
@@ -91,6 +89,7 @@ export default function LandingPage() {
                 <ArrowRight size={18} />
               </ScrollAnchorLink>
             </div>
+            <p className="landing-hero-punchline">Venues using Ayana capture up to 30% more bookings</p>
           </div>
 
           <aside className="landing-product-ui" aria-label="Ayana operator dashboard preview">
@@ -109,25 +108,75 @@ export default function LandingPage() {
 
       <section id="how-it-works" className="landing-section landing-how">
         <div className="landing-container">
-          <h2>How It Works</h2>
+          <div className="landing-how-showcase">
+            <div className="landing-iphone-frame" aria-label="Example WhatsApp reservation conversation">
+              <span className="landing-iphone-speaker" />
+              <div className="landing-whatsapp-phone">
+                <div className="landing-whatsapp-header">
+                  <span>VR</span>
+                  <div>
+                    <strong>Velvet Room</strong>
+                    <small>online</small>
+                  </div>
+                </div>
 
-          <div className="landing-step-grid">
-            {steps.map((step) => {
-              const Icon = step.icon;
+                <div className="landing-whatsapp-thread">
+                  <p className="landing-whatsapp-bubble landing-whatsapp-outbound">
+                    Hi, this is Velvet Room. How many guests are you planning for?
+                  </p>
+                  <p className="landing-whatsapp-bubble landing-whatsapp-inbound">
+                    Do you have a table for 6 this Friday around 11?
+                  </p>
+                  <p className="landing-whatsapp-bubble landing-whatsapp-outbound">
+                    Yes. A lounge table is available with a $900 minimum and $150 deposit.
+                  </p>
+                  <p className="landing-whatsapp-bubble landing-whatsapp-outbound">
+                    The table includes priority entry and seating until 2AM.
+                  </p>
+                  <p className="landing-whatsapp-bubble landing-whatsapp-inbound">
+                    Is the $900 minimum okay if we arrive closer to 11:30?
+                  </p>
+                  <p className="landing-whatsapp-bubble landing-whatsapp-outbound">
+                    Yes. We can hold it for 11:30 with the deposit.
+                  </p>
+                  <p className="landing-whatsapp-bubble landing-whatsapp-inbound">
+                    That works. Can I book it?
+                  </p>
+                  <p className="landing-whatsapp-bubble landing-whatsapp-outbound">
+                    Absolutely. Use this secure link to pay the deposit and confirm your table.
+                  </p>
+                  <div className="landing-whatsapp-link">
+                    <span>Secure deposit</span>
+                    <strong>$150 payment link</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-              return (
-                <article key={step.title} className="landing-step">
-                  <span className="landing-step-icon">
-                    <Icon size={48} strokeWidth={1.7} />
-                  </span>
-                  <h3>{step.title}</h3>
-                  <p>{step.description}</p>
-                </article>
-              );
-            })}
+            <div className="landing-how-workflow">
+              <h2>How It Works</h2>
+
+              <div className="landing-step-grid">
+                {steps.map((step) => {
+                  const Icon = step.icon;
+
+                  return (
+                    <article key={step.title} className="landing-step">
+                      <span className="landing-step-icon">
+                        <Icon size={48} strokeWidth={1.7} />
+                      </span>
+                      <div>
+                        <h3>{step.title}</h3>
+                        <p>{step.description}</p>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+
+              <p className="landing-bottom-line">Runs alongside your existing operation &mdash; no changes required</p>
+            </div>
           </div>
-
-          <p className="landing-bottom-line">Runs alongside your existing operation &mdash; no changes required</p>
         </div>
       </section>
 
@@ -137,8 +186,8 @@ export default function LandingPage() {
             <div className="landing-owner-copy">
               <h2>Built for owners who want to capture every booking opportunity</h2>
               <p>
-                Ayana gives your team a reliable way to handle every incoming inquiry, responding
-                instantly while you stay in control of availability, pricing, and final booking decisions.
+                Most inquiries happen when you&apos;re not available to respond. Ayana makes sure you
+                never lose them.
               </p>
             </div>
 
